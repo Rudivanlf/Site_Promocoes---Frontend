@@ -118,7 +118,7 @@ const [cartCount, setCartCount] = useState(0);
               className="buy-button"
               onClick={() => setCartCount(cartCount + 1)}
             >
-              Comprar
+              Salvar
             </button>
 
             <img
@@ -136,7 +136,7 @@ const [cartCount, setCartCount] = useState(0);
       </div>
 
         <div className="cart">
-        ({cartCount}) Carrinho
+        ({cartCount}) Lista de Produtos
       </div>
 
            
