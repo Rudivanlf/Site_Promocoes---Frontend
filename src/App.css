@@ -166,3 +166,55 @@ body {
   background-color: #22c55e;
   box-shadow: 0 0 8px #22c55e;
 }
+
+/* Busca */
+.search-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.search-input {
+  flex: 1;
+  max-width: 480px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  background-color: #1f2937;
+  color: #e5e7eb;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: #22c55e;
+}
+
+.search-button {
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  background-color: #22c55e;
+  color: #0b1220;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.search-button:hover:not(:disabled) {
+  background-color: #16a34a;
+  transform: scale(1.03);
+}
+
+.search-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.search-error {
+  color: #f87171;
+  margin-bottom: 12px;
+}

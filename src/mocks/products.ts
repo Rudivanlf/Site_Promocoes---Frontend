@@ -5,6 +5,7 @@ export interface Product {
   description: string;
   sales: number;
   image: string;
+  link?: string;
   category: string;
 }
 
