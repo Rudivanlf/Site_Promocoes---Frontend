@@ -50,10 +50,14 @@ export async function fetchProducts(
 ): Promise<Product[]> {
   const params = new URLSearchParams({ q: query, pagina: String(pagina) });
 
+  if (!API_BASE_URL) {
+    throw new Error("A variável VITE_API_BASE_URL não está definida!");
+  }
+  
   const response = await fetch(
     `${API_BASE_URL}/api/scraper/mercadolivre/?${params}`
   );
-
+  
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     throw new Error(err.erro || `Erro ${response.status}`);
