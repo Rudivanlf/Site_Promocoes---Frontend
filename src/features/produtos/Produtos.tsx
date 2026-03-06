@@ -1,6 +1,6 @@
 import type { Product } from "../../mocks/products";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
 interface MLProduto {
   titulo: string;
@@ -51,7 +51,7 @@ export async function fetchProducts(
   const params = new URLSearchParams({ q: query, pagina: String(pagina) });
 
   if (!API_BASE_URL) {
-    throw new Error("A variável VITE_API_BASE_URL não está definida!");
+    throw new Error("A variável VITE_BASE_API_URL não está definida!");
   }
   
   const response = await fetch(

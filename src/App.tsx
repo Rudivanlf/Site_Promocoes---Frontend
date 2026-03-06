@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { fetchProducts } from "./features/produtos/Produtos";
+import { LoginModal } from "./features/login/loginModal";
+import { CadastroModal } from "./features/cadastro/CadastroModal";
+
 import "./App.css";
 import {
   XAxis,
@@ -7,8 +10,9 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
-  LineChart,
-  Line
+  BarChart,
+  Bar,
+  Cell
 } from "recharts";
 
 interface Product {
@@ -24,35 +28,88 @@ interface Product {
 
 function App() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todas");
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+ const [showLogin, setShowLogin] = useState(false);
+const [showRegister, setShowRegister] = useState(false);
+const [page, setPage] = useState<"home" | "analytics" | "favorites">("home");
+const [search, setSearch] = useState("");
+const [favorites, setFavorites] = useState<string[]>([]);
+const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
+const [userEmail, setUserEmail] = useState(
+  localStorage.getItem("loggedUser")
+);
+const [showLogout, setShowLogout] = useState(false);
 
-  useEffect(() => {
-    if (!searchQuery.trim()) return;
+useEffect(() => {
+  async function loadInitialProducts() {
+    try {
+      const data = await fetchProducts("celular");
 
-    async function loadProducts() {
-      setLoading(true);
-      setError(null);
-      setSelectedId(null);
-      try {
-        const data = await fetchProducts(searchQuery);
-        setProducts(data);
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        setError(msg || "Erro ao carregar produtos");
-        setProducts([]);
-      } finally {
-        setLoading(false);
+      if (data && data.length > 0) {
+
+        const sorted = data
+          .sort((a: Product, b: Product) => b.sales - a.sales)
+          .slice(0, 8); // pega os 8 mais vendidos
+
+        setProducts(sorted);
       }
+
+    } catch (err) {
+      console.error("Erro ao carregar produtos iniciais", err);
+    }
+  }
+
+  loadInitialProducts();
+}, []);
+
+function toggleFavorite(product: Product) {
+
+  if (!product.link) return;
+
+  if (favorites.includes(product.link)) {
+
+    setFavorites(favorites.filter(link => link !== product.link));
+
+    setFavoriteProducts(
+      favoriteProducts.filter(p => p.link !== product.link)
+    );
+
+  } else {
+
+    setFavorites([...favorites, product.link]);
+
+    setFavoriteProducts([...favoriteProducts, product]);
+
+  }
+
+}
+
+async function handleSearch(query: string) {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const data = await fetchProducts(query);
+
+    if (data && data.length > 0) {
+      setProducts(data);
+    } else {
+      setProducts([]);
+      setError("Nenhum produto encontrado");
     }
 
-    loadProducts();
-  }, [searchQuery]);
-
+  } catch (err: unknown) {
+  const msg = err instanceof Error ? err.message : String(err);
+  setError(msg || "Erro ao carregar produtos");
+}finally {
+    setLoading(false);
+  }
+}
 const categories = [
   "Todas",
   ...Array.from(new Set(products.map(p => p.category)))
@@ -95,29 +152,113 @@ const filteredProducts =
     if (Array.isArray(payloadArr) && payloadArr.length) {
       const first = payloadArr[0] as { payload?: unknown } | undefined;
       const payload = first?.payload as { id?: number | string } | undefined;
-      if (payload && (typeof payload.id === "number" || typeof payload.id === "string")) {
-        setSelectedId(Number(payload.id));
+      if (payload && payload.id) {
+        setSelectedId(String(payload.id));
       }
     }
   };
 
   const [cartCount, setCartCount] = useState(0);
+  const [requestId, setRequestId] = useState(0);
 
-  const selectedProduct = products.find(
-    (product) => product.id === selectedId
-  );
+const selectedProduct =
+  favoriteProducts.find((product) => product.link === selectedId) ||
+  products.find((product) => product.link === selectedId);
+
+  const topProducts = [...products]
+  .sort((a, b) => b.sales - a.sales)
+  .slice(0, 4);
 
   return (
   <div className="container">
+    <div className="navbar">
+  <button onClick={() => setPage("home")}>Home</button>
+  <button onClick={() => setPage("analytics")}>Analytics</button>
+  <button onClick={() => setPage("favorites")}>
+    Favoritos ({favorites.length})
+  </button>
+</div>
+    <button
+  className="login-top-button"
+  onClick={() => {
+  if (userEmail) {
+    setShowLogout(true);
+  } else {
+    setShowLogin(true);
+  }
+}}
+>
+  {userEmail ? userEmail.charAt(0).toUpperCase() : "Fazer Login"}
+</button>
+
+  {showLogin && (
+  <LoginModal
+    onClose={() => setShowLogin(false)}
+    onOpenRegister={() => {
+      setShowLogin(false);
+      setShowRegister(true);
+    }}
+    onLoginSuccess={(email) => setUserEmail(email)}
+  />
+)}
+
+
+{showRegister && (
+  <CadastroModal
+    onClose={() => setShowRegister(false)}
+    onOpenLogin={() => {
+      setShowRegister(false);
+      setShowLogin(true);
+    }}
+  />
+)}
+{showLogout && (
+  <div className="login-overlay" onClick={() => setShowLogout(false)}>
+    <div
+      className="login-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h2>Deseja sair?</h2>
+
+      <div className="login-buttons">
+        <button
+          onClick={() => {
+            localStorage.removeItem("loggedUser");
+            setUserEmail(null);
+            setShowLogout(false);
+          }}
+        >
+          Sair
+        </button>
+
+        <button onClick={() => setShowLogout(false)}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{page === "home" && (
+<>
+
+
   <h1>Selecionar Produto</h1>
 
-  <form
-    className="search-form"
-    onSubmit={(e) => {
-      e.preventDefault();
-      if (searchInput.trim()) setSearchQuery(searchInput.trim());
-    }}
-  >
+<form
+  className="search-form"
+  onSubmit={(e) => {
+  e.preventDefault();
+
+  const query = searchInput.trim();
+  if (!query) return;
+
+  setSelectedId(null);
+  setProducts([]); // limpa produtos antigos
+
+  handleSearch(query);
+}}
+>
     <input
       className="search-input"
       type="text"
@@ -132,140 +273,284 @@ const filteredProducts =
 
   {error && <p className="search-error">{error}</p>}
 
-  <select
-    value={selectedId ?? ""}
-    onChange={(e) => setSelectedId(Number(e.target.value))}
-  >
+  <label htmlFor="product-select">Escolher produto:</label>
+
+<select
+  id="product-select"
+  value={selectedId ?? ""}
+  onChange={(e) => setSelectedId(e.target.value)}
+>
     <option value="" disabled>
       Escolha um produto
     </option>
     {products.map((product) => (
-      <option key={product.id} value={product.id}>
+      <option key={product.link} value={product.link}>
         {product.name}
       </option>
     ))}
   </select>
 
+  <div className="home-products">
 
+  {topProducts.map((product) => (
+    <div
+      key={product.id}
+      className="home-card"
+      onClick={() => setSelectedId(product.link ?? null)}
+    >
+      <img src={product.image} alt={product.name} />
 
-    <div className={`content ${selectedProduct ? "active" : ""}`}>
-      
-      {/* Painel esquerdo */}
-      <div className="details">
-        {selectedProduct && (
-          <>
-            <button
-              className="buy-button"
-              onClick={() => setCartCount(cartCount + 1)}
-            >
-              Salvar
-            </button>
+      <h3>{product.name}</h3>
 
-            <img
-              src={selectedProduct.image}
-              alt={selectedProduct.name}
-              className="product-image"
-            />
+      <p className="price">
+        R$ {product.price}
+      </p>
 
-            <h2>{selectedProduct.name}</h2>
-            {selectedProduct.link && (
-              <p>
-                <a
-                  href={selectedProduct.link}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Ver no Mercado Livre
-                </a>
-              </p>
-            )}
-            <p><strong>Preço:</strong> R$ {selectedProduct.price}</p>
-            <p>{selectedProduct.description}</p>
-            <p><strong>Vendas:</strong> {selectedProduct.sales}</p>
-          </>
-        )}
-      </div>
+      <p className="sales">
+        {product.sales} vendas
+      </p>
 
+    </div>
+  ))}
+
+</div>
+
+</>
+)}
+
+    
         <div className="cart">
         ({cartCount}) Lista de Produtos
       </div>
+{page === "analytics" && (
+  <div className="analytics-layout">
 
-           
-      {/* Gráfico */}
-      <div className="chart">
-          <ResponsiveContainer width="100%" height={450}>
-            
-  <LineChart
-    data={filteredProducts}
-    onClick={handleChartClick}
-  >
-    
-    <CartesianGrid stroke="#1f2937" strokeDasharray="3 3" />
-    
-    <XAxis 
-      dataKey="name" 
-      stroke="#9ca3af"
-      tick={{ fill: "#9ca3af", fontSize: 12 }}
-    />
-    
-    <YAxis 
-      stroke="#9ca3af"
-      tick={{ fill: "#9ca3af", fontSize: 12 }}
-    />
-    
-    <Tooltip content={CustomTooltip} />
+    {selectedProduct && (
+      <div className="side-product">
+        <button
+          className="buy-button"
+          onClick={() => setCartCount(cartCount + 1)}
+        >
+          Salvar
+        </button>
 
-    
-    <Line
-      type="monotone"
-      dataKey="price"
-      stroke="#22c55e"
-      strokeWidth={2}
-  dot={(dotProps: unknown) => {
-    if (typeof dotProps !== "object" || dotProps === null) return null;
-    const p = dotProps as { cx?: number; cy?: number; payload?: unknown };
-    const cx = p.cx ?? 0;
-    const cy = p.cy ?? 0;
-    const payload = p.payload as { id?: number | string } | undefined;
-    const id = payload && (typeof payload.id === "number" || typeof payload.id === "string") ? Number(payload.id) : undefined;
-    return (
-      <circle
-        cx={cx}
-        cy={cy}
-        r={6}
-        fill="#22c55e"
-        style={{ cursor: id !== undefined ? "pointer" : "default" }}
-        onClick={() => id !== undefined && setSelectedId(id)}
-      />
-    );
-  }}
-/>
-  </LineChart>
-</ResponsiveContainer>
+        <div
+          className="image-container"
+          onClick={() => toggleFavorite(selectedProduct)}
+        >
+          <img
+            src={selectedProduct.image}
+            alt={selectedProduct.name}
+            className="product-image"
+          />
+
+          <div className="favorite-star">
+            {favorites.includes(selectedProduct?.link ?? "") ? "⭐" : "☆"}
+          </div>
+        </div>
+
+        <h2>{selectedProduct.name}</h2>
+
+        {selectedProduct.link && (
+          <p>
+            <a href={selectedProduct.link} target="_blank" rel="noreferrer">
+              Ver no Mercado Livre
+            </a>
+          </p>
+        )}
+
+        <p><strong>Preço:</strong> R$ {selectedProduct.price}</p>
+        <p>{selectedProduct.description}</p>
+        <p><strong>Vendas:</strong> {selectedProduct.sales}</p>
       </div>
+    )}
 
-      <div className="categories">
-  <h3>Categorias</h3>
+    {/* GRÁFICO */}
+    <div className="chart">
+      <ResponsiveContainer width="100%" height={450}>
+        <BarChart data={filteredProducts} onClick={handleChartClick}>
+  <CartesianGrid stroke="#1f2937" strokeDasharray="3 3" />
 
-  {categories.map((category) => (
-    <div
-  key={category}
-  className="category-item"
-  onClick={() => setSelectedCategory(category)}
+  <XAxis
+    dataKey="name"
+    stroke="#9ca3af"
+    tick={{ fill: "#9ca3af", fontSize: 12 }}
+  />
+
+  <YAxis
+    stroke="#9ca3af"
+    tick={{ fill: "#9ca3af", fontSize: 12 }}
+  />
+
+  <Tooltip content={CustomTooltip} />
+
+ <Bar
+  dataKey="price"
+  radius={[6, 6, 0, 0]}
+  onClick={(data: any) => {
+    if (data?.payload?.link) {
+      setSelectedId(data.payload.link);
+    }
+  }}
 >
-  <div
-    className={`category-circle ${
-      selectedCategory === category ? "active" : ""
-    }`}
-  ></div>
-
-  <span>{category}</span>
-</div>
+  {filteredProducts.map((product) => (
+    <Cell
+      key={product.link}
+      fill={product.link === selectedId ? "#f97316" : "#22c55e"}
+    />
   ))}
-</div>
-    </div >
+</Bar>
+</BarChart>
+      </ResponsiveContainer>
+    </div>
+
+    {/* CATEGORIAS */}
+    <div className="categories">
+      <h3>Categorias</h3>
+
+      {categories.map((category) => (
+        <div
+          key={category}
+          className="category-item"
+          onClick={() => setSelectedCategory(category)}
+        >
+          <div
+            className={`category-circle ${
+              selectedCategory === category ? "active" : ""
+            }`}
+          ></div>
+
+          <span>{category}</span>
+        </div>
+      ))}
+    </div>
+    
   </div>
+)}
+
+{page === "favorites" && (
+  <div className="analytics-layout">
+
+    {selectedProduct && (
+      <div className="side-product">
+        <button
+          className="buy-button"
+          onClick={() => setCartCount(cartCount + 1)}
+        >
+          Salvar
+        </button>
+
+        <div
+          className="image-container"
+          onClick={() => toggleFavorite(selectedProduct)}
+        >
+          <img
+            src={selectedProduct.image}
+            alt={selectedProduct.name}
+            className="product-image"
+          />
+
+          <div className="favorite-star">
+            {favorites.includes(selectedProduct?.link ?? "") ? "⭐" : "☆"}
+          </div>
+        </div>
+
+        <h2>{selectedProduct.name}</h2>
+
+        {selectedProduct.link && (
+          <p>
+            <a href={selectedProduct.link} target="_blank" rel="noreferrer">
+              Ver no Mercado Livre
+            </a>
+          </p>
+        )}
+
+        <p><strong>Preço:</strong> R$ {selectedProduct.price}</p>
+        <p>{selectedProduct.description}</p>
+        <p><strong>Vendas:</strong> {selectedProduct.sales}</p>
+      </div>
+    )}
+
+    <div className="home-products">
+
+      {favorites.length === 0 && (
+        <p>Nenhum produto favoritado ainda</p>
+      )}
+
+      {favoriteProducts.map((product) => (
+        <div
+          key={product.id}
+          className="home-card"
+          onClick={() => setSelectedId(product.link ?? null)}
+        >
+          <img src={product.image} alt={product.name} />
+
+          <h3>{product.name}</h3>
+
+          <p className="price">
+            R$ {product.price}
+          </p>
+
+          <p className="sales">
+            {product.sales} vendas
+          </p>
+        </div>
+      ))}
+
+    </div>
+
+  </div>
+)}
+
+{page === "home" && selectedProduct && (
+  <div className="home-selected-product center">
+    <button
+      className="buy-button"
+      onClick={() => setCartCount(cartCount + 1)}
+    >
+      Salvar
+    </button>
+
+    <div
+      className="image-container"
+      onClick={() => toggleFavorite(selectedProduct)}
+    >
+      <img
+        src={selectedProduct.image}
+        alt={selectedProduct.name}
+        className="product-image"
+      />
+
+      <div className="favorite-star">
+        {favorites.includes(selectedProduct?.link ?? "") ? "⭐" : "☆"}
+      </div>
+    </div>
+
+    <h2>{selectedProduct.name}</h2>
+
+    {selectedProduct.link && (
+      <p>
+        <a
+          href={selectedProduct.link}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Ver no Mercado Livre
+        </a>
+      </p>
+    )}
+
+    <p><strong>Preço:</strong> R$ {selectedProduct.price}</p>
+    <p>{selectedProduct.description}</p>
+    <p><strong>Vendas:</strong> {selectedProduct.sales}</p>
+
+  </div>
+)}
+   
+    </div >
+
 );
 }
+
 
 export default App;

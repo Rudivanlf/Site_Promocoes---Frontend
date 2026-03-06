@@ -7,4 +7,4 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:8001
+      - VITE_BASE_API_URL=http://localhost:8000
