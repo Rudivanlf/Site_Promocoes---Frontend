@@ -19,7 +19,7 @@ interface RequestAttemptOptions {
   operationName: string;
 }
 
-const API_BASE_URL = (import.meta.env.VITE_BASE_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_BASE_API_URL);
 const REGISTER_PATH = import.meta.env.VITE_AUTH_REGISTER_PATH || "/api/usuarios/";
 const LOGIN_PATH = import.meta.env.VITE_AUTH_LOGIN_PATH || "/api/usuarios/login/";
 const REGISTER_PATHS = parseCsv(
