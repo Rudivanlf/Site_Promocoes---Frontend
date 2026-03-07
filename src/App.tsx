@@ -45,7 +45,6 @@ const [userEmail, setUserEmail] = useState(
   localStorage.getItem("loggedUser")
 );
 const [showLogout, setShowLogout] = useState(false);
-const [favoritesLoading, setFavoritesLoading] = useState(false);
 
 useEffect(() => {
   async function loadInitialProducts() {
@@ -159,6 +158,7 @@ async function toggleFavorite(product: Product) {
 async function handleSearch(query: string) {
   setLoading(true);
   setError(null);
+  setCurrentPage(1);
 
   try {
     const data = await fetchProducts(query);
@@ -232,9 +232,13 @@ const selectedProduct =
   favoriteProducts.find((product) => product.link === selectedId) ||
   products.find((product) => product.link === selectedId);
 
-  const topProducts = [...products]
-  .sort((a, b) => b.sales - a.sales)
-  .slice(0, 4);
+ const sortedProducts = [...products].sort((a, b) => b.sales - a.sales);
+
+const indexOfLast = currentPage * productsPerPage;
+const indexOfFirst = indexOfLast - productsPerPage;
+const currentProducts = products.slice(indexOfFirst, indexOfLast);
+
+const totalPages = Math.ceil(products.length / productsPerPage);
 
   return (
   <div className="container">
@@ -308,25 +312,19 @@ const selectedProduct =
 )}
 
 {page === "home" && (
-<>
+<div className={`home-layout ${selectedProduct ? "active" : ""}`}>
 
+<div className="home-left">
 
-  <h1>Selecionar Produto</h1>
+<h1>Selecionar Produto</h1>
 
 <form
-  className="search-form"
   onSubmit={(e) => {
-  e.preventDefault();
-
-  const query = searchInput.trim();
-  if (!query) return;
-
-  setSelectedId(null);
-  setProducts([]); // limpa produtos antigos
-
-  handleSearch(query);
-}}
+    e.preventDefault();
+    handleSearch(searchInput);
+  }}
 >
+
     <input
       className="search-input"
       type="text"
@@ -341,26 +339,11 @@ const selectedProduct =
 
   {error && <p className="search-error">{error}</p>}
 
-  <label htmlFor="product-select">Escolher produto:</label>
 
-<select
-  id="product-select"
-  value={selectedId ?? ""}
-  onChange={(e) => setSelectedId(e.target.value)}
->
-    <option value="" disabled>
-      Escolha um produto
-    </option>
-    {products.map((product) => (
-      <option key={product.link} value={product.link}>
-        {product.name}
-      </option>
-    ))}
-  </select>
 
   <div className="home-products">
 
-  {topProducts.map((product) => (
+  {currentProducts.map((product) => (
     <div
       key={product.id}
       className="home-card"
@@ -383,9 +366,63 @@ const selectedProduct =
 
 </div>
 
-</>
+<div className="pagination">
+  {Array.from({ length: totalPages }, (_, i) => (
+    <button
+      key={i}
+      onClick={() => setCurrentPage(i + 1)}
+      className={currentPage === i + 1 ? "active-page" : ""}
+    >
+      {i + 1}
+    </button>
+  ))}
+</div>
+
+</div>
+{selectedProduct && (
+<div className="side-product">
+
+<button
+  className="buy-button"
+  onClick={() => setCartCount(cartCount + 1)}
+>
+  Salvar
+</button>
+
+<div
+  className="image-container"
+  onClick={() => selectedProduct && toggleFavorite(selectedProduct)}
+>
+  <img
+    src={selectedProduct.image}
+    alt={selectedProduct.name}
+    className="product-image"
+  />
+
+  <div className="favorite-star">
+    {favorites.includes(selectedProduct?.link ?? "") ? "⭐" : "☆"}
+  </div>
+</div>
+
+<h2>{selectedProduct.name}</h2>
+
+{selectedProduct.link && (
+<p>
+<a href={selectedProduct.link} target="_blank" rel="noreferrer">
+Ver no Mercado Livre
+</a>
+</p>
 )}
 
+<p><strong>Preço:</strong> R$ {selectedProduct.price}</p>
+<p>{selectedProduct.description}</p>
+<p><strong>Vendas:</strong> {selectedProduct.sales}</p>
+
+</div>
+)}
+</div>
+
+)}
     
         <div className="cart">
         ({cartCount}) Lista de Produtos
@@ -541,6 +578,7 @@ const selectedProduct =
 
     <div className="home-products">
 
+
       {favorites.length === 0 && (
         <p>Nenhum produto favoritado ainda</p>
       )}
@@ -570,50 +608,7 @@ const selectedProduct =
   </div>
 )}
 
-{page === "home" && selectedProduct && (
-  <div className="home-selected-product center">
-    <button
-      className="buy-button"
-      onClick={() => setCartCount(cartCount + 1)}
-    >
-      Salvar
-    </button>
 
-    <div
-      className="image-container"
-      onClick={() => toggleFavorite(selectedProduct)}
-    >
-      <img
-        src={selectedProduct.image}
-        alt={selectedProduct.name}
-        className="product-image"
-      />
-
-      <div className="favorite-star">
-        {favorites.includes(selectedProduct?.link ?? "") ? "⭐" : "☆"}
-      </div>
-    </div>
-
-    <h2>{selectedProduct.name}</h2>
-
-    {selectedProduct.link && (
-      <p>
-        <a
-          href={selectedProduct.link}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Ver no Mercado Livre
-        </a>
-      </p>
-    )}
-
-    <p><strong>Preço:</strong> R$ {selectedProduct.price}</p>
-    <p>{selectedProduct.description}</p>
-    <p><strong>Vendas:</strong> {selectedProduct.sales}</p>
-
-  </div>
-)}
    
     </div >
 
