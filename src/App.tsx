@@ -43,7 +43,7 @@ function App() {
     localStorage.getItem("loggedUser")
   );
   const [showLogout, setShowLogout] = useState(false);
-  const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [, setFavoritesLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 8;
 
@@ -489,9 +489,11 @@ Ver no Mercado Livre
  <Bar
   dataKey="price"
   radius={[6, 6, 0, 0]}
-  onClick={(data: any) => {
-    if (data?.payload?.link) {
-      setSelectedId(data.payload.link);
+  onClick={(ev: unknown) => {
+    if (typeof ev !== "object" || ev === null) return;
+    const d = ev as { payload?: { link?: string } };
+    if (d.payload && d.payload.link) {
+      setSelectedId(d.payload.link);
     }
   }}
 >
