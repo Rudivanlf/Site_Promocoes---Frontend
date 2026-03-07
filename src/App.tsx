@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchProducts } from "./features/produtos/Produtos";
-import { LoginModal } from "./features/login/loginModal";
+import { LoginModal } from "./features/login/LoginModal";
 import { CadastroModal } from "./features/cadastro/CadastroModal";
 import { addFavorite, removeFavorite, getFavorites } from "./shared/utils/favoritesApi";
 
@@ -34,17 +34,18 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todas");
   const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
- const [showLogin, setShowLogin] = useState(false);
-const [showRegister, setShowRegister] = useState(false);
-const [page, setPage] = useState<"home" | "analytics" | "favorites">("home");
-const [search, setSearch] = useState("");
-const [favorites, setFavorites] = useState<string[]>([]);
-const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
-const [userEmail, setUserEmail] = useState(
-  localStorage.getItem("loggedUser")
-);
-const [showLogout, setShowLogout] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [page, setPage] = useState<"home" | "analytics" | "favorites">("home");
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
+  const [userEmail, setUserEmail] = useState(
+    localStorage.getItem("loggedUser")
+  );
+  const [showLogout, setShowLogout] = useState(false);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 8;
 
 useEffect(() => {
   async function loadInitialProducts() {
@@ -226,19 +227,15 @@ const filteredProducts =
   };
 
   const [cartCount, setCartCount] = useState(0);
-  const [requestId, setRequestId] = useState(0);
 
-const selectedProduct =
+  const selectedProduct =
   favoriteProducts.find((product) => product.link === selectedId) ||
   products.find((product) => product.link === selectedId);
 
- const sortedProducts = [...products].sort((a, b) => b.sales - a.sales);
-
-const indexOfLast = currentPage * productsPerPage;
-const indexOfFirst = indexOfLast - productsPerPage;
-const currentProducts = products.slice(indexOfFirst, indexOfLast);
-
-const totalPages = Math.ceil(products.length / productsPerPage);
+  const indexOfLast = currentPage * productsPerPage;
+  const indexOfFirst = indexOfLast - productsPerPage;
+  const currentProducts = products.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(products.length / productsPerPage);
 
   return (
   <div className="container">
