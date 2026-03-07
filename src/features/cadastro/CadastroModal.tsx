@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { registerUser } from "../../shared/utils/authApi";
 
 interface CadastroModalProps {
   onClose: () => void;
@@ -8,15 +9,30 @@ interface CadastroModalProps {
 export function CadastroModal({ onClose, onOpenLogin }: CadastroModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleRegister = () => {
-    localStorage.setItem("registeredEmail", email);
-    localStorage.setItem("registeredPassword", password);
+  const handleRegister = async () => {
+    if (!email || !password) {
+      setMessage("Preencha email e senha.");
+      return;
+    }
 
-    alert("Cadastro realizado com sucesso!");
+    try {
+      setIsLoading(true);
+      setMessage("");
 
-    onClose();
-    onOpenLogin();
+      await registerUser({ email, password });
+
+      setMessage("Cadastro realizado com sucesso!");
+      onClose();
+      onOpenLogin();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Erro ao cadastrar usuario.";
+      setMessage(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -38,9 +54,13 @@ export function CadastroModal({ onClose, onOpenLogin }: CadastroModalProps) {
           onChange={(e) => setPassword(e.target.value)}
         />
 
+        {message && <p className="login-message">{message}</p>}
+
         <div className="login-buttons">
-          <button onClick={handleRegister}>Cadastrar</button>
-          <button onClick={onClose}>Cancelar</button>
+          <button onClick={handleRegister} disabled={isLoading}>
+            {isLoading ? "Cadastrando..." : "Cadastrar"}
+          </button>
+          <button onClick={onClose} disabled={isLoading}>Cancelar</button>
         </div>
       </div>
     </div>

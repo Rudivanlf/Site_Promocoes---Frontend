@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { loginUser } from "../../shared/utils/authApi";
 
 interface LoginModalProps {
   onClose: () => void;
@@ -10,18 +11,33 @@ export function LoginModal({ onClose, onOpenRegister, onLoginSuccess }: LoginMod
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
-    const savedEmail = localStorage.getItem("registeredEmail");
-    const savedPassword = localStorage.getItem("registeredPassword");
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setMessage("Preencha email e senha.");
+      return;
+    }
 
-    if (email === savedEmail && password === savedPassword) {
-      setMessage("Login com sucesso!");
-      onLoginSuccess(email);
-      localStorage.setItem("loggedUser", email);
+    try {
+      setIsLoading(true);
+      setMessage("");
+
+      const authResult = await loginUser({ email, password });
+      const userEmail = authResult.userEmail || email;
+
+      localStorage.setItem("loggedUser", userEmail);
+      if (authResult.token) {
+        localStorage.setItem("authToken", authResult.token);
+      }
+
+      onLoginSuccess(userEmail);
       onClose();
-    } else {
-      setMessage("Email ou senha incorretos.");
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Email ou senha incorretos.";
+      setMessage(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -65,8 +81,10 @@ export function LoginModal({ onClose, onOpenRegister, onLoginSuccess }: LoginMod
       {message && <p className="login-message">{message}</p>}
 
       <div className="login-buttons">
-        <button onClick={handleLogin}>Entrar</button>
-        <button onClick={onClose}>Cancelar</button>
+        <button onClick={handleLogin} disabled={isLoading}>
+          {isLoading ? "Entrando..." : "Entrar"}
+        </button>
+        <button onClick={onClose} disabled={isLoading}>Cancelar</button>
       </div>
 
       <span
@@ -82,3 +100,4 @@ export function LoginModal({ onClose, onOpenRegister, onLoginSuccess }: LoginMod
   </div>
 );
 }
+

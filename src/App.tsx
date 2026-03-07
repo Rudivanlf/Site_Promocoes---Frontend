@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchProducts } from "./features/produtos/Produtos";
 import { LoginModal } from "./features/login/loginModal";
 import { CadastroModal } from "./features/cadastro/CadastroModal";
+import { addFavorite, removeFavorite, getFavorites } from "./shared/utils/favoritesApi";
 
 import "./App.css";
 import {
@@ -44,6 +45,7 @@ const [userEmail, setUserEmail] = useState(
   localStorage.getItem("loggedUser")
 );
 const [showLogout, setShowLogout] = useState(false);
+const [favoritesLoading, setFavoritesLoading] = useState(false);
 
 useEffect(() => {
   async function loadInitialProducts() {
@@ -67,26 +69,91 @@ useEffect(() => {
   loadInitialProducts();
 }, []);
 
-function toggleFavorite(product: Product) {
+// Carregar favoritos quando o usuário estiver logado
+useEffect(() => {
+  async function loadFavorites() {
+    if (!userEmail) {
+      setFavorites([]);
+      setFavoriteProducts([]);
+      return;
+    }
 
-  if (!product.link) return;
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
 
-  if (favorites.includes(product.link)) {
-
-    setFavorites(favorites.filter(link => link !== product.link));
-
-    setFavoriteProducts(
-      favoriteProducts.filter(p => p.link !== product.link)
-    );
-
-  } else {
-
-    setFavorites([...favorites, product.link]);
-
-    setFavoriteProducts([...favoriteProducts, product]);
-
+    try {
+      setFavoritesLoading(true);
+      const favs = await getFavorites();
+      
+      setFavorites(favs.map(f => f.link));
+      setFavoriteProducts(favs.map(f => ({
+        id: f.id || 0,
+        name: f.name,
+        price: f.price,
+        description: f.description || "",
+        sales: f.sales || 0,
+        image: f.image,
+        link: f.link,
+        category: f.category || ""
+      })));
+    } catch (err) {
+      console.error("Erro ao carregar favoritos:", err);
+    } finally {
+      setFavoritesLoading(false);
+    }
   }
 
+  loadFavorites();
+}, [userEmail]);
+
+async function toggleFavorite(product: Product) {
+  if (!product.link) return;
+
+  // Se o usuário não estiver logado, apenas altera o estado local
+  if (!userEmail) {
+    if (favorites.includes(product.link)) {
+      setFavorites(favorites.filter(link => link !== product.link));
+      setFavoriteProducts(favoriteProducts.filter(p => p.link !== product.link));
+    } else {
+      setFavorites([...favorites, product.link]);
+      setFavoriteProducts([...favoriteProducts, product]);
+    }
+    return;
+  }
+
+  // Se o usuário estiver logado, sincroniza com o backend
+  const isFavorited = favorites.includes(product.link);
+
+  try {
+    if (isFavorited) {
+      // Remover do backend
+      await removeFavorite(product.link);
+      
+      // Atualizar estado local
+      setFavorites(favorites.filter(link => link !== product.link));
+      setFavoriteProducts(favoriteProducts.filter(p => p.link !== product.link));
+    } else {
+      // Adicionar ao backend
+      await addFavorite({
+        link: product.link,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        description: product.description,
+        sales: product.sales,
+        category: product.category,
+        id: product.id
+      });
+      
+      // Atualizar estado local
+      setFavorites([...favorites, product.link]);
+      setFavoriteProducts([...favoriteProducts, product]);
+    }
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Erro ao gerenciar favorito";
+    console.error("Erro ao favoritar/desfavoritar:", errorMessage);
+    alert(errorMessage);
+  }
 }
 
 async function handleSearch(query: string) {
@@ -224,6 +291,7 @@ const selectedProduct =
         <button
           onClick={() => {
             localStorage.removeItem("loggedUser");
+            localStorage.removeItem("authToken");
             setUserEmail(null);
             setShowLogout(false);
           }}
