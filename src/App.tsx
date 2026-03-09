@@ -38,9 +38,12 @@ const [showRegister, setShowRegister] = useState(false);
 const [page, setPage] = useState<"home" | "analytics" | "favorites">("home");
 const [favorites, setFavorites] = useState<string[]>([]);
 const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
-const [userEmail, setUserEmail] = useState(
-  localStorage.getItem("loggedUser")
-);
+const [userEmail, setUserEmail] = useState<string | null>(null);
+
+useEffect(() => {
+  const storedUser = localStorage.getItem("loggedUser");
+  setUserEmail(storedUser);
+}, []);
 const [showLogout, setShowLogout] = useState(false);
 const [currentPage, setCurrentPage] = useState(1);
 const productsPerPage = 12;
@@ -486,7 +489,7 @@ Ver no Mercado Livre
 >
   {filteredProducts.map((product) => (
     <Cell
-      key={product.link}
+  key={product.id}
       fill={product.link === selectedId ? "#f97316" : "#22c55e"}
     />
   ))}
