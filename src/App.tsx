@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchProducts } from "./features/produtos/Produtos";
-import { LoginModal } from "./features/login/loginModal";
+import { LoginModal } from "./features/login/LoginModal";
 import { CadastroModal } from "./features/cadastro/CadastroModal";
 
 import "./App.css";
@@ -33,11 +33,9 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todas");
   const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
  const [showLogin, setShowLogin] = useState(false);
 const [showRegister, setShowRegister] = useState(false);
 const [page, setPage] = useState<"home" | "analytics" | "favorites">("home");
-const [search, setSearch] = useState("");
 const [favorites, setFavorites] = useState<string[]>([]);
 const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
 const [userEmail, setUserEmail] = useState(
@@ -203,13 +201,9 @@ const product = productMatch
   }
 }
 
-  const [requestId, setRequestId] = useState(0);
-
 const selectedProduct =
   favoriteProducts.find((product) => product.link === selectedId) ||
   products.find((product) => product.link === selectedId);
-
- const sortedProducts = [...products].sort((a, b) => b.sales - a.sales);
 
 const indexOfLast = currentPage * productsPerPage;
 const indexOfFirst = indexOfLast - productsPerPage;
@@ -246,7 +240,7 @@ const totalPages = Math.ceil(products.length / productsPerPage);
       setShowLogin(false);
       setShowRegister(true);
     }}
-    onLoginSuccess={(email) => setUserEmail(email)}
+    onLoginSuccess={(email: string) => setUserEmail(email)}
   />
 )}
 
