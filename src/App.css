@@ -434,3 +434,15 @@ background:#1f2937;
 background:#22c55e !important;
 color:#1f2937;
 }
+
+.link-search-container{
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  justify-content: center;
+}
+
+.link-search-container input{
+  flex: 1;
+  max-width: 480px;
+}

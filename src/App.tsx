@@ -46,6 +46,7 @@ const [userEmail, setUserEmail] = useState(
 const [showLogout, setShowLogout] = useState(false);
 const [currentPage, setCurrentPage] = useState(1);
 const productsPerPage = 12;
+const [linkInput, setLinkInput] = useState("");
 
 useEffect(() => {
   async function loadInitialProducts() {
@@ -161,7 +162,47 @@ const filteredProducts =
     }
   };
 
-  const [cartCount, setCartCount] = useState(0);
+async function handleSearchByLink(link: string) {
+  try {
+
+    const url = new URL(link);
+
+    let slug = "";
+
+    if (url.pathname.includes("/p/")) {
+      slug = url.pathname.split("/p/")[0].split("/").pop() || "";
+    } else {
+      slug = url.pathname.split("/").pop() || "";
+    }
+
+    const query = slug
+      .replace(/MLB\d+/i, "")
+      .replace(/-/g, " ")
+      .trim();
+
+    if (!query) {
+      console.error("Não foi possível extrair a busca do link");
+      return;
+    }
+
+    const data = await fetchProducts(query);
+
+    if (data && data.length > 0) {
+      const productMatch = data.find(p => p.link === link);
+
+const product = productMatch
+  ? productMatch
+  : { ...data[0], link: link };
+
+      setProducts([product]);
+      setSelectedId(product.link ?? null);
+    }
+
+  } catch (err) {
+    console.error("Link inválido", err);
+  }
+}
+
   const [requestId, setRequestId] = useState(0);
 
 const selectedProduct =
@@ -272,6 +313,25 @@ const totalPages = Math.ceil(products.length / productsPerPage);
     </button>
   </form>
 
+<div className="link-search-container">
+
+  <input
+    className="search-input"
+    type="text"
+    placeholder="Colar link do Mercado Livre..."
+    value={linkInput}
+    onChange={(e) => setLinkInput(e.target.value)}
+  />
+
+  <button
+    className="search-button"
+    onClick={() => handleSearchByLink(linkInput)}
+  >
+    Buscar
+  </button>
+
+</div>
+
   {error && <p className="search-error">{error}</p>}
 
 
@@ -319,14 +379,14 @@ const totalPages = Math.ceil(products.length / productsPerPage);
 
 <button
   className="buy-button"
-  onClick={() => setCartCount(cartCount + 1)}
+  onClick={() => selectedProduct && toggleFavorite(selectedProduct)}
 >
-  Salvar
+  {favorites.includes(selectedProduct?.link ?? "") ? "Desfavoritar" : "Favoritar"}
 </button>
 
 <div
   className="image-container"
-  onClick={() => selectedProduct && toggleFavorite(selectedProduct)}
+  onClick={() => toggleFavorite(selectedProduct)}
 >
   <img
     src={selectedProduct.image}
@@ -358,10 +418,7 @@ Ver no Mercado Livre
 </div>
 
 )}
-    
-        <div className="cart">
-        ({cartCount}) Lista de Produtos
-      </div>
+
 {page === "analytics" && (
   <div className="analytics-layout">
 
@@ -369,9 +426,9 @@ Ver no Mercado Livre
       <div className="side-product">
         <button
           className="buy-button"
-          onClick={() => setCartCount(cartCount + 1)}
+          onClick={() => selectedProduct && toggleFavorite(selectedProduct)}
         >
-          Salvar
+          {favorites.includes(selectedProduct?.link ?? "") ? "Desfavoritar" : "Favoritar"}
         </button>
 
         <div
@@ -475,9 +532,9 @@ Ver no Mercado Livre
       <div className="side-product">
         <button
           className="buy-button"
-          onClick={() => setCartCount(cartCount + 1)}
+          onClick={() => selectedProduct && toggleFavorite(selectedProduct)}
         >
-          Salvar
+          {favorites.includes(selectedProduct?.link ?? "") ? "Desfavoritar" : "Favoritar"}
         </button>
 
         <div
