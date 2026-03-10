@@ -947,7 +947,9 @@
 /* Custom styled wrapper — shows neon-green design */
 /* Container with neon-green border — wraps the real Google button */
 .google-login-custom-btn {
+  position: relative;
   width: 100%;
+  height: 48px;
   border-radius: 8px;
   border: 2px solid #22c55e;
   overflow: hidden;
@@ -961,15 +963,39 @@
   transform: translateY(-2px);
 }
 
-/* Target div where Google renders its iframe button */
-.google-login-real-btn {
+/* Visible decorative layer — pointer-events: none so clicks pass through */
+.google-login-custom-visible {
+  position: absolute;
+  inset: 0;
   display: flex;
-  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  background: rgba(0, 0, 0, 0.85);
+  color: #22c55e;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Real Google iframe — on top, opacity: 0.01 (not 0!) to allow clicks in Chrome */
+.google-login-real-btn {
+  position: absolute;
+  inset: 0;
+  opacity: 0.01;
+  z-index: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
 }
 
 .google-login-real-btn > div,
 .google-login-real-btn iframe {
   width: 100% !important;
+  height: 100% !important;
 }
 
 /* ========== RESPONSIVIDADE ========== */
