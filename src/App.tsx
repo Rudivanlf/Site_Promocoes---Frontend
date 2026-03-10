@@ -323,7 +323,7 @@ function App() {
               <span className="h1-part-green">Project Promo IA</span>
             </h1>
 
-            <form onSubmit={(e) => { e.preventDefault(); handleSearch(searchInput); }}>
+            <form style={{ display: "none" }} onSubmit={(e) => { e.preventDefault(); handleSearch(searchInput); }}>
               <input
                 className="search-input"
                 type="text"
@@ -336,7 +336,7 @@ function App() {
               </button>
             </form>
 
-            <div className="link-search-container">
+            <div className="link-search-container" style={{ display: "none" }}>
               <input
                 className="search-input"
                 type="text"
