@@ -1,4 +1,4 @@
-interface FavoriteProduct {
+export interface FavoriteProduct {
   id?: number;
   link: string;
   name: string;
@@ -14,11 +14,20 @@ interface FavoritePayload {
   link: string;
   name: string;
   price: number;
-  image: string;
-  description: string;
-  sales: number;
-  category: string;
-  id: number;
+  image?: string;
+  description?: string;
+  sales?: number;
+  category?: string;
+  id?: number | string;
+}
+
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
 }
 
 const API_BASE_URL = (import.meta.env.VITE_BASE_API_URL);
@@ -43,6 +52,18 @@ function buildUrl(path: string): string {
   return `${API_BASE_URL}${normalizedPath}`;
 }
 
+async function parseError(response: Response, fallback: string): Promise<ApiError> {
+  const isJson = response.headers.get("content-type")?.includes("application/json");
+  const data = isJson ? await response.json() : await response.text();
+  const message =
+    typeof data === "object" && data !== null && "error" in data
+      ? String((data as { error: unknown }).error)
+      : typeof data === "string" && data.trim()
+      ? data
+      : fallback;
+  return new ApiError(response.status, message);
+}
+
 export async function addFavorite(product: FavoritePayload): Promise<FavoriteProduct> {
   const response = await fetch(buildUrl(FAVORITES_ENDPOINT), {
     method: "POST",
@@ -51,16 +72,7 @@ export async function addFavorite(product: FavoritePayload): Promise<FavoritePro
   });
 
   if (!response.ok) {
-    const isJson = response.headers.get("content-type")?.includes("application/json");
-    const data = isJson ? await response.json() : await response.text();
-    
-    const errorMessage = typeof data === "object" && data.error 
-      ? data.error 
-      : typeof data === "string" 
-        ? data 
-        : "Erro ao adicionar favorito";
-    
-    throw new Error(errorMessage);
+    throw await parseError(response, "Erro ao adicionar favorito");
   }
 
   return response.json();
@@ -73,17 +85,8 @@ export async function removeFavorite(productLink: string): Promise<void> {
     body: JSON.stringify({ link: productLink })
   });
 
-  if (!response.ok && response.status !== 204) {
-    const isJson = response.headers.get("content-type")?.includes("application/json");
-    const data = isJson ? await response.json() : await response.text();
-    
-    const errorMessage = typeof data === "object" && data.error 
-      ? data.error 
-      : typeof data === "string" 
-        ? data 
-        : "Erro ao remover favorito";
-    
-    throw new Error(errorMessage);
+  if (!response.ok) {
+    throw await parseError(response, "Erro ao remover favorito");
   }
 }
 
@@ -94,16 +97,7 @@ export async function getFavorites(): Promise<FavoriteProduct[]> {
   });
 
   if (!response.ok) {
-    const isJson = response.headers.get("content-type")?.includes("application/json");
-    const data = isJson ? await response.json() : await response.text();
-    
-    const errorMessage = typeof data === "object" && data.error 
-      ? data.error 
-      : typeof data === "string" 
-        ? data 
-        : "Erro ao carregar favoritos";
-    
-    throw new Error(errorMessage);
+    throw await parseError(response, "Erro ao carregar favoritos");
   }
 
   return response.json();

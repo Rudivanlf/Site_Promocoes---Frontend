@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 // Lógica original mantida
 import { fetchProducts } from "./features/produtos/Produtos";
+import { getFavorites, addFavorite, removeFavorite, ApiError } from "./shared/utils/favoritesApi";
 import { LoginModal } from "./features/login/LoginModal";
 import { CadastroModal } from "./features/cadastro/CadastroModal";
 
@@ -50,6 +51,17 @@ function App() {
     setUserEmail(storedUser);
   }, []);
 
+  // Load/clear favorites whenever the logged-in user changes
+  useEffect(() => {
+    if (userEmail) {
+      loadFavorites();
+    } else {
+      setFavorites([]);
+      setFavoriteProducts([]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userEmail]);
+
   useEffect(() => {
     async function loadInitialProducts() {
       try {
@@ -65,14 +77,95 @@ function App() {
     loadInitialProducts();
   }, []);
 
-  function toggleFavorite(product: Product) {
+  async function loadFavorites() {
+    try {
+      const data = await getFavorites();
+      setFavorites(data.map(f => f.link));
+      setFavoriteProducts(
+        data.map(f => ({
+          id: f.id ?? 0,
+          name: f.name,
+          price: f.price,
+          description: f.description ?? "",
+          sales: f.sales ?? 0,
+          image: f.image ?? "",
+          link: f.link,
+          category: f.category ?? "",
+        }))
+      );
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        handleLogout();
+      }
+    }
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("loggedUser");
+    localStorage.removeItem("authToken");
+    setUserEmail(null);
+    setShowLogout(false);
+    setFavorites([]);
+    setFavoriteProducts([]);
+  }
+
+  async function toggleFavorite(product: Product) {
     if (!product.link) return;
-    if (favorites.includes(product.link)) {
-      setFavorites(favorites.filter(link => link !== product.link));
-      setFavoriteProducts(favoriteProducts.filter(p => p.link !== product.link));
+
+    if (!userEmail) {
+      setShowLogin(true);
+      return;
+    }
+
+    const isCurrentlyFavorite = favorites.includes(product.link);
+
+    if (isCurrentlyFavorite) {
+      // Optimistic remove
+      setFavorites(prev => prev.filter(l => l !== product.link));
+      setFavoriteProducts(prev => prev.filter(p => p.link !== product.link));
+
+      try {
+        await removeFavorite(product.link);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          handleLogout();
+        } else if (err instanceof ApiError && err.status === 404) {
+          // Already removed on backend — state already correct
+        } else {
+          // Revert on unexpected error
+          setFavorites(prev => [...prev, product.link!]);
+          setFavoriteProducts(prev => [...prev, product]);
+        }
+      }
     } else {
-      setFavorites([...favorites, product.link]);
-      setFavoriteProducts([...favoriteProducts, product]);
+      // Optimistic add
+      setFavorites(prev => [...prev, product.link!]);
+      setFavoriteProducts(prev => [...prev, product]);
+
+      try {
+        await addFavorite({
+          link: product.link,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          description: product.description,
+          sales: product.sales,
+          category: product.category,
+          id: product.id,
+        });
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          handleLogout();
+          setFavorites(prev => prev.filter(l => l !== product.link));
+          setFavoriteProducts(prev => prev.filter(p => p.link !== product.link));
+        } else if (err instanceof ApiError && err.status === 400) {
+          // Already a favorite on backend — optimistic state is correct
+        } else {
+          // Revert on unexpected error
+          setFavorites(prev => prev.filter(l => l !== product.link));
+          setFavoriteProducts(prev => prev.filter(p => p.link !== product.link));
+        }
+      }
     }
   }
 
@@ -189,7 +282,7 @@ function App() {
               <h2 className="text-2xl font-bold text-white mb-6">Deseja sair?</h2>
               <div className="flex gap-4">
                 <button className="flex-1 py-3 rounded-xl font-bold bg-white/10" onClick={() => setShowLogout(false)}>Cancelar</button>
-                <button className="flex-1 py-3 rounded-xl font-bold bg-red-500" onClick={() => { localStorage.removeItem("loggedUser"); setUserEmail(null); setShowLogout(false); }}>Sair</button>
+                <button className="flex-1 py-3 rounded-xl font-bold bg-red-500" onClick={handleLogout}>Sair</button>
               </div>
             </div>
           </div>
