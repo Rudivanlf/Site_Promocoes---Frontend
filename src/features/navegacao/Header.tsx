@@ -1,4 +1,4 @@
-import { Search, LogOut, ArrowRight, Home, BarChart2, Heart } from "lucide-react";
+import { Settings, LogOut, ArrowRight, Home, BarChart2, Heart } from "lucide-react";
 
 interface HeaderProps {
   userEmail: string | null;
@@ -16,7 +16,7 @@ export default function Header({ userEmail, currentPage, setPage, favoritesCount
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => setPage("home")}>
               <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <Search className="w-5 h-5 text-emerald-500" />
+                <Settings className="w-5 h-5 text-emerald-500" />
               </div>
               <span className="text-xl font-bold text-white hidden sm:block">ProjectPromoIA</span>
             </div>

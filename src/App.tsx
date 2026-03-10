@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Settings, Home, BarChart2, Star } from "lucide-react";
 
 import { fetchProducts } from "./features/produtos/Produtos";
 import { getFavorites, addFavorite, removeFavorite, ApiError } from "./shared/utils/favoritesApi";
@@ -268,12 +269,14 @@ function App() {
     <div className="container">
       <div className="navbar">
         <div className="logo-container">
-          <div className="logo-circle" onClick={() => setShowMenu(!showMenu)}></div>
+          <div className="logo-circle" onClick={() => setShowMenu(!showMenu)}>
+            <Settings className="w-6 h-6" style={{ color: "#22c55e" }} />
+          </div>
           {showMenu && (
             <div className="dropdown-menu show">
-              <button onClick={() => { setPage("home"); setShowMenu(false); }} className="menu-item" data-tooltip="Home">🏠</button>
-              <button onClick={() => { setPage("analytics"); setShowMenu(false); }} className="menu-item" data-tooltip="Analytics">📊</button>
-              <button onClick={() => { setPage("favorites"); setShowMenu(false); }} className="menu-item" data-tooltip="Favoritos">⭐</button>
+              <button onClick={() => { setPage("home"); setShowMenu(false); }} className="menu-item" data-tooltip="Home"><Home className="w-5 h-5" /></button>
+              <button onClick={() => { setPage("analytics"); setShowMenu(false); }} className="menu-item" data-tooltip="Analytics"><BarChart2 className="w-5 h-5" /></button>
+              <button onClick={() => { setPage("favorites"); setShowMenu(false); }} className="menu-item" data-tooltip="Favoritos"><Star className="w-5 h-5" /></button>
             </div>
           )}
         </div>
