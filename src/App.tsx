@@ -323,11 +323,19 @@ function App() {
               <span className="h1-part-green">Project Promo IA</span>
             </h1>
 
-            <form onSubmit={(e) => { e.preventDefault(); handleSearch(searchInput); }}>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const isLink = searchInput.startsWith("http://") || searchInput.startsWith("https://");
+              if (isLink) {
+                handleSearchByLink(searchInput);
+              } else {
+                handleSearch(searchInput);
+              }
+            }}>
               <input
                 className="search-input"
                 type="text"
-                placeholder="Buscar no Mercado Livre..."
+                placeholder="Buscar produto ou colar link do Mercado Livre..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
               />
