@@ -16,15 +16,49 @@ export function GoogleLoginButton({ onLoginSuccess, onClose }: GoogleLoginButton
   const buttonRef = useRef<HTMLDivElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Refs to always hold the latest callbacks — avoids stale closures with Google SDK
+  const onLoginSuccessRef = useRef(onLoginSuccess);
+  const onCloseRef = useRef(onClose);
   useEffect(() => {
-    const initGoogleButton = () => {
+    onLoginSuccessRef.current = onLoginSuccess;
+    onCloseRef.current = onClose;
+  });
+
+  useEffect(() => {
+    async function handleCredential({ credential }: { credential: string }) {
+      setErrorMessage(null);
+      try {
+        const res = await fetch(GOOGLE_LOGIN_PATH, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: credential }),
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          localStorage.setItem("authToken", data.token);
+          const email: string = data.usuario?.email ?? "";
+          localStorage.setItem("loggedUser", email);
+          onLoginSuccessRef.current(email);
+          onCloseRef.current();
+        } else {
+          setErrorMessage(data.error ?? "Erro ao fazer login com Google.");
+        }
+      } catch {
+        setErrorMessage("Falha na comunicação com o servidor.");
+      }
+    }
+
+    function renderGoogleButton() {
       if (!buttonRef.current) return;
 
-      const width = containerRef.current?.offsetWidth ?? 320;
+      // Measure width AFTER layout so the Google iframe matches the container exactly
+      const width = containerRef.current?.offsetWidth || 320;
 
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse,
+        callback: handleCredential,
       });
 
       window.google.accounts.id.renderButton(buttonRef.current, {
@@ -35,7 +69,12 @@ export function GoogleLoginButton({ onLoginSuccess, onClose }: GoogleLoginButton
         locale: "pt-BR",
         width,
       });
-    };
+    }
+
+    function initGoogleButton() {
+      // requestAnimationFrame ensures the container is painted and offsetWidth is correct
+      requestAnimationFrame(renderGoogleButton);
+    }
 
     if (window.google) {
       initGoogleButton();
@@ -48,33 +87,8 @@ export function GoogleLoginButton({ onLoginSuccess, onClose }: GoogleLoginButton
         return () => script.removeEventListener("load", initGoogleButton);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handleCredentialResponse({ credential }: { credential: string }) {
-    setErrorMessage(null);
-    try {
-      const res = await fetch(GOOGLE_LOGIN_PATH, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: credential }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        localStorage.setItem("authToken", data.token);
-        const email: string = data.usuario?.email ?? "";
-        localStorage.setItem("loggedUser", email);
-        onLoginSuccess(email);
-        onClose();
-      } else {
-        setErrorMessage(data.error ?? "Erro ao fazer login com Google.");
-      }
-    } catch {
-      setErrorMessage("Falha na comunicação com o servidor.");
-    }
-  }
 
   return (
     <div className="google-login-wrapper">

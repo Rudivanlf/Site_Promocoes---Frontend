@@ -988,6 +988,15 @@
   opacity: 0;
   z-index: 1;
   overflow: hidden;
+  /* Force the Google iframe to stretch and fill the container */
+  display: flex;
+  align-items: stretch;
+}
+
+.google-login-real-btn > div,
+.google-login-real-btn iframe {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* ========== RESPONSIVIDADE ========== */
