@@ -17,23 +17,37 @@ export function GoogleLoginButton({ onLoginSuccess, onClose }: GoogleLoginButton
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!window.google || !buttonRef.current) return;
+    const initGoogleButton = () => {
+      if (!buttonRef.current) return;
 
-    const width = containerRef.current?.offsetWidth ?? 320;
+      const width = containerRef.current?.offsetWidth ?? 320;
 
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleCredentialResponse,
-    });
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse,
+      });
 
-    window.google.accounts.id.renderButton(buttonRef.current, {
-      type: "standard",
-      theme: "outline",
-      size: "large",
-      text: "signin_with",
-      locale: "pt-BR",
-      width,
-    });
+      window.google.accounts.id.renderButton(buttonRef.current, {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        text: "signin_with",
+        locale: "pt-BR",
+        width,
+      });
+    };
+
+    if (window.google) {
+      initGoogleButton();
+    } else {
+      const script = document.querySelector<HTMLScriptElement>(
+        'script[src="https://accounts.google.com/gsi/client"]'
+      );
+      if (script) {
+        script.addEventListener("load", initGoogleButton, { once: true });
+        return () => script.removeEventListener("load", initGoogleButton);
+      }
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
