@@ -6,9 +6,17 @@ interface SearchBarProps {
   onSearch: () => void;
   isLoading: boolean;
   isResultsView?: boolean;
+  placeholder?: string;
 }
 
-export default function SearchBar({ value, onChange, onSearch, isLoading, isResultsView = false }: SearchBarProps) {
+export default function SearchBar({
+  value,
+  onChange,
+  onSearch,
+  isLoading,
+  isResultsView = false,
+  placeholder = "O que você está procurando? (Ex: TV 65 polegadas)",
+}: SearchBarProps) {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !isLoading) {
       onSearch();
@@ -23,7 +31,7 @@ export default function SearchBar({ value, onChange, onSearch, isLoading, isResu
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyPress}
-          placeholder="O que você está procurando? (Ex: TV 65 polegadas)"
+          placeholder={placeholder}
           className="w-full px-6 py-4 pr-32 bg-gray-900 border-2 border-gray-800 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-all duration-300 text-lg"
         />
         <button
