@@ -679,12 +679,28 @@
 
 /* ========== ANALYTICS LAYOUT ========== */
 .analytics-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: row;
   gap: 2rem;
   padding: 3rem;
   flex: 1;
   align-items: start;
+}
+
+.analytics-layout .side-product {
+  flex: 0 0 320px;
+  width: 320px;
+}
+
+.chart-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: sticky;
+  top: 100px;
+  align-self: start;
 }
 
 .chart {
@@ -694,9 +710,98 @@
   padding: 2rem;
   backdrop-filter: blur(10px);
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.2), 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(34, 197, 94, 0.1);
-  height: fit-content;
-  position: sticky;
-  top: 120px;
+}
+
+/* ========== CHART HEADER ========== */
+.chart-header {
+  margin-bottom: 1.25rem;
+}
+
+.chart-title {
+  color: #22c55e;
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+  margin: 0 0 0.25rem 0;
+}
+
+.chart-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+  transition: color 0.3s ease;
+  font-style: italic;
+}
+
+.chart-hint.has-selection {
+  color: #f97316;
+}
+
+/* Cursor pointer on recharts bars */
+.recharts-bar-rectangle {
+  cursor: pointer;
+}
+
+/* ========== CHART TOOLTIP ========== */
+.chart-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 10px;
+  background: rgba(5, 10, 15, 0.92);
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  box-shadow:
+    0 0 18px rgba(34, 197, 94, 0.2),
+    0 6px 24px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: none;
+  max-width: 220px;
+}
+
+.chart-tooltip-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #d1fae5;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  letter-spacing: 0.2px;
+}
+
+.chart-tooltip-price {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #22c55e;
+  text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+  letter-spacing: 0.5px;
+}
+
+.chart-tooltip-sales {
+  font-size: 0.72rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Slide-in animation for side-product in analytics */
+@keyframes slideInPanel {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.analytics-layout .side-product {
+  animation: slideInPanel 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* ========== CATEGORIES ========== */
@@ -707,7 +812,6 @@
   border: 2px solid rgba(34, 197, 94, 0.4);
   backdrop-filter: blur(10px);
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.2), 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(34, 197, 94, 0.1);
-  margin-top: 2rem;
 }
 
 .categories h3 {
@@ -855,6 +959,26 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   box-shadow: 0 0 15px rgba(34, 197, 94, 0.3), inset 0 0 5px rgba(34, 197, 94, 0.1);
+}
+
+.password-hint {
+  font-size: 0.78rem;
+  color: #4b5563;
+  margin: -0.5rem 0 0 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: color 0.3s ease;
+  letter-spacing: 0.3px;
+}
+
+.password-hint.typing {
+  color: #f97316;
+}
+
+.password-hint.valid {
+  color: #22c55e;
+  text-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
 }
 
 .login-buttons {
@@ -1074,10 +1198,18 @@
   .side-product {
     position: static;
     top: auto;
+    flex: 1 1 100%;
+    width: 100%;
   }
 
   .analytics-layout {
+    flex-direction: column;
     padding: 1.5rem;
+  }
+
+  .chart-column {
+    position: static;
+    width: 100%;
   }
 
   .chart {

@@ -55,6 +55,13 @@ export function CadastroModal({ onClose, onOpenLogin, onLoginSuccess }: Cadastro
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        <p className={`password-hint${password.length >= 8 ? " valid" : password.length > 0 ? " typing" : ""}`}>
+          {password.length >= 8
+            ? "✓ Senha válida"
+            : password.length > 0
+            ? `• Mínimo 8 caracteres — faltam ${8 - password.length}`
+            : "• Mínimo 8 caracteres"}
+        </p>
 
         {message && <p className="login-message">{message}</p>}
 

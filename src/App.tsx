@@ -235,25 +235,25 @@ function App() {
       const first = payload[0] as { payload?: unknown } | undefined;
       const data = first?.payload as { name?: string; price?: number | string; sales?: number } | undefined;
       return (
-        <div className="bg-white text-black p-3 rounded-lg shadow-xl border border-gray-300">
-          <strong className="block mb-1">{data?.name}</strong>
-          <p className="font-bold">R$ {typeof data?.price === 'number' ? data.price.toFixed(2) : data?.price}</p>
+        <div className="chart-tooltip">
+          <span className="chart-tooltip-name">{data?.name}</span>
+          <span className="chart-tooltip-price">
+            R$ {typeof data?.price === "number" ? data.price.toFixed(2) : data?.price}
+          </span>
+          {data?.sales !== undefined && (
+            <span className="chart-tooltip-sales">{data.sales} vendas</span>
+          )}
         </div>
       );
     }
     return null;
   };
 
-  const handleChartClick = (e: unknown) => {
-    if (typeof e !== "object" || e === null) return;
-    const ev = e as { activePayload?: unknown[] };
-    const payloadArr = ev.activePayload;
-    if (Array.isArray(payloadArr) && payloadArr.length) {
-      const first = payloadArr[0] as { payload?: unknown } | undefined;
-      const payload = first?.payload as { id?: number | string; link?: string } | undefined;
-      if (payload && payload.link) {
-        setSelectedId(payload.link);
-      }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleBarClick = (data: any) => {
+    const link = data?.link as string | undefined;
+    if (link) {
+      setSelectedId(prev => prev === link ? null : link);
     }
   };
 
@@ -431,30 +431,50 @@ function App() {
             </div>
           )}
 
-          <div className="chart">
-            <ResponsiveContainer width="100%" height={450}>
-              <BarChart data={filteredProducts} onClick={handleChartClick}>
-                <CartesianGrid stroke="#1f2937" strokeDasharray="3 3" />
-                <XAxis dataKey="name" stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-                <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-                <Tooltip content={CustomTooltip} />
-                <Bar dataKey="price" radius={[6, 6, 0, 0]}>
-                  {filteredProducts.map((product) => (
-                    <Cell key={product.id} fill={product.link === selectedId ? "#f97316" : "#22c55e"} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="categories">
-            <h3>Categorias</h3>
-            {categories.map((category) => (
-              <div key={category} className="category-item" onClick={() => setSelectedCategory(category)}>
-                <div className={`category-circle ${selectedCategory === category ? "active" : ""}`}></div>
-                <span>{category}</span>
+          <div className="chart-column">
+            <div className="chart">
+              <div className="chart-header">
+                <h3 className="chart-title">Análise de Preços</h3>
+                <p className={`chart-hint${selectedId ? " has-selection" : ""}`}>
+                  {selectedId
+                    ? "✓ Produto selecionado — clique novamente para deselecionar"
+                    : "Clique em uma barra para ver o produto"}
+                </p>
               </div>
-            ))}
+              <ResponsiveContainer width="100%" height={380}>
+                <BarChart data={filteredProducts}>
+                  <CartesianGrid stroke="#1f2937" strokeDasharray="3 3" />
+                  <XAxis dataKey="name" stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                  <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                  <Tooltip content={CustomTooltip} />
+                  <Bar
+                    dataKey="price"
+                    radius={[6, 6, 0, 0]}
+                    cursor="pointer"
+                    onClick={handleBarClick}
+                    activeBar={{ fill: "#fbbf24", stroke: "#f97316", strokeWidth: 2 }}
+                  >
+                    {filteredProducts.map((product) => (
+                      <Cell
+                        key={product.id}
+                        fill={product.link === selectedId ? "#f97316" : "#22c55e"}
+                        style={{ cursor: "pointer" }}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="categories">
+              <h3>Categorias</h3>
+              {categories.map((category) => (
+                <div key={category} className="category-item" onClick={() => setSelectedCategory(category)}>
+                  <div className={`category-circle ${selectedCategory === category ? "active" : ""}`}></div>
+                  <span>{category}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
