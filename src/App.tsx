@@ -323,7 +323,7 @@ function App() {
               <span className="h1-part-green">Project Promo IA</span>
             </h1>
 
-            <form style={{ display: "none" }} onSubmit={(e) => { e.preventDefault(); handleSearch(searchInput); }}>
+            <form onSubmit={(e) => { e.preventDefault(); handleSearch(searchInput); }}>
               <input
                 className="search-input"
                 type="text"
