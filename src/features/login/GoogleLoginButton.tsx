@@ -29,11 +29,11 @@ export function GoogleLoginButton({ onLoginSuccess, onClose }: GoogleLoginButton
       if (googleReadyRef.current) return;
       googleReadyRef.current = true;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window.google.accounts.id as any).initialize({
+      window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         context: "signin",
         cancel_on_tap_outside: false,
+        use_fedcm_for_prompt: true,
         callback: async ({ credential }: { credential: string }) => {
           setErrorMessage(null);
           setIsLoading(true);
@@ -83,26 +83,7 @@ export function GoogleLoginButton({ onLoginSuccess, onClose }: GoogleLoginButton
     if (isLoading) return;
     setErrorMessage(null);
 
-    window.google.accounts.id.prompt((notification: {
-      isNotDisplayed: () => boolean;
-      isSkippedMoment: () => boolean;
-      getNotDisplayedReason: () => string;
-    }) => {
-      if (notification.isNotDisplayed()) {
-        const reason = notification.getNotDisplayedReason();
-        if (reason === "unregistered_origin") {
-          setErrorMessage("Domínio não autorizado no Google Cloud Console.");
-        } else if (reason === "opt_out_or_no_session") {
-          setErrorMessage("Entre na sua conta Google no navegador e tente novamente.");
-        } else if (reason === "suppressed_by_user") {
-          setErrorMessage("Prompt bloqueado pelo navegador. Tente limpar cookies e recarregar.");
-        } else {
-          setErrorMessage(`Login indisponível (${reason}). Recarregue a página e tente novamente.`);
-        }
-      }
-      // isSkippedMoment = user dismissed → no action needed
-      // isDisplayed / isDismissedMoment → wait for callback
-    });
+    window.google.accounts.id.prompt();
   }
 
   return (
