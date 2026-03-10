@@ -404,7 +404,7 @@
 /* ========== PRODUCTS GRID ========== */
 .home-products {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
   margin-top: 2rem;
 }
@@ -1179,7 +1179,7 @@
   }
 
   .home-products {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
 
@@ -1299,7 +1299,7 @@
   }
 
   .home-products {
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
     margin-top: 1rem;
   }
