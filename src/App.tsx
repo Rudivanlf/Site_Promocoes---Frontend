@@ -296,6 +296,7 @@ function App() {
         <CadastroModal
           onClose={() => setShowRegister(false)}
           onOpenLogin={() => { setShowRegister(false); setShowLogin(true); }}
+          onLoginSuccess={(email: string) => { setUserEmail(email); setShowRegister(false); }}
         />
       )}
       {showLogout && (

@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { registerUser } from "../../shared/utils/authApi";
+import { GoogleLoginButton } from "../login/GoogleLoginButton";
 
 interface CadastroModalProps {
   onClose: () => void;
   onOpenLogin: () => void;
+  onLoginSuccess: (email: string) => void;
 }
 
-export function CadastroModal({ onClose, onOpenLogin }: CadastroModalProps) {
+export function CadastroModal({ onClose, onOpenLogin, onLoginSuccess }: CadastroModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -62,6 +64,8 @@ export function CadastroModal({ onClose, onOpenLogin }: CadastroModalProps) {
           </button>
           <button onClick={onClose} disabled={isLoading}>Cancelar</button>
         </div>
+
+        <GoogleLoginButton onLoginSuccess={onLoginSuccess} onClose={onClose} />
       </div>
     </div>
   );

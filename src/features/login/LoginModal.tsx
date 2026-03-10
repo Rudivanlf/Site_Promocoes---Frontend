@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { loginUser } from "../../shared/utils/authApi";
+import { GoogleLoginButton } from "./GoogleLoginButton";
 
 interface LoginModalProps {
   onClose: () => void;
@@ -96,6 +97,8 @@ export function LoginModal({ onClose, onOpenRegister, onLoginSuccess }: LoginMod
       >
         Cadastrar
       </span>
+
+      <GoogleLoginButton onLoginSuccess={onLoginSuccess} onClose={onClose} />
     </div>
   </div>
 );
