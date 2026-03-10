@@ -1,6 +1,6 @@
 import type { Product } from "../../mocks/products";
 
-const API_BASE_URL = import.meta.env.VITE_BASE_API_URL;
+const API_BASE_URL = (import.meta.env.VITE_BASE_API_URL as string | undefined)?.trim() || "";
 
 interface MLProduto {
   titulo: string;
@@ -44,19 +44,23 @@ function mapMLProdutoToProduct(produto: MLProduto, index: number): Product {
   };
 }
 
+function buildApiUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  if (!API_BASE_URL) {
+    return normalizedPath;
+  }
+
+  return `${API_BASE_URL}${normalizedPath}`;
+}
+
 export async function fetchProducts(
   query: string,
   pagina: number = 1
 ): Promise<Product[]> {
   const params = new URLSearchParams({ q: query, pagina: String(pagina) });
 
-  if (!API_BASE_URL) {
-    throw new Error("A variável VITE_BASE_API_URL não está definida!");
-  }
-  
-  const response = await fetch(
-    `${API_BASE_URL}/api/scraper/mercadolivre/?${params}`
-  );
+  const response = await fetch(buildApiUrl(`/api/scraper/mercadolivre/?${params}`));
   
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
