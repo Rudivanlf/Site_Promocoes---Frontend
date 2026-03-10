@@ -12,83 +12,98 @@ interface GoogleLoginButtonProps {
 }
 
 export function GoogleLoginButton({ onLoginSuccess, onClose }: GoogleLoginButtonProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLDivElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Refs to always hold the latest callbacks — avoids stale closures with Google SDK
   const onLoginSuccessRef = useRef(onLoginSuccess);
   const onCloseRef = useRef(onClose);
+  const googleReadyRef = useRef(false);
+
   useEffect(() => {
     onLoginSuccessRef.current = onLoginSuccess;
     onCloseRef.current = onClose;
   });
 
   useEffect(() => {
-    async function handleCredential({ credential }: { credential: string }) {
-      setErrorMessage(null);
-      try {
-        const res = await fetch(GOOGLE_LOGIN_PATH, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: credential }),
-        });
+    function initGoogle() {
+      if (googleReadyRef.current) return;
+      googleReadyRef.current = true;
 
-        const data = await res.json();
-
-        if (data.success) {
-          localStorage.setItem("authToken", data.token);
-          const email: string = data.usuario?.email ?? "";
-          localStorage.setItem("loggedUser", email);
-          onLoginSuccessRef.current(email);
-          onCloseRef.current();
-        } else {
-          setErrorMessage(data.error ?? "Erro ao fazer login com Google.");
-        }
-      } catch {
-        setErrorMessage("Falha na comunicação com o servidor.");
-      }
-    }
-
-    function renderGoogleButton() {
-      if (!buttonRef.current) return;
-
-      // Measure width AFTER layout so the Google iframe matches the container exactly
-      const width = containerRef.current?.offsetWidth || 320;
-
-      window.google.accounts.id.initialize({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window.google.accounts.id as any).initialize({
         client_id: GOOGLE_CLIENT_ID,
-        callback: handleCredential,
+        context: "signin",
+        cancel_on_tap_outside: false,
+        callback: async ({ credential }: { credential: string }) => {
+          setErrorMessage(null);
+          setIsLoading(true);
+          try {
+            const res = await fetch(GOOGLE_LOGIN_PATH, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ token: credential }),
+            });
+            const data = await res.json();
+            if (data.success) {
+              localStorage.setItem("authToken", data.token);
+              const email: string = data.usuario?.email ?? "";
+              localStorage.setItem("loggedUser", email);
+              onLoginSuccessRef.current(email);
+              onCloseRef.current();
+            } else {
+              setErrorMessage(data.error ?? "Erro ao fazer login com Google.");
+            }
+          } catch {
+            setErrorMessage("Falha na comunicação com o servidor.");
+          } finally {
+            setIsLoading(false);
+          }
+        },
       });
-
-      window.google.accounts.id.renderButton(buttonRef.current, {
-        type: "standard",
-        theme: "outline",
-        size: "large",
-        text: "signin_with",
-        locale: "pt-BR",
-        width,
-      });
-    }
-
-    function initGoogleButton() {
-      // requestAnimationFrame ensures the container is painted and offsetWidth is correct
-      requestAnimationFrame(renderGoogleButton);
     }
 
     if (window.google) {
-      initGoogleButton();
+      initGoogle();
     } else {
       const script = document.querySelector<HTMLScriptElement>(
         'script[src="https://accounts.google.com/gsi/client"]'
       );
       if (script) {
-        script.addEventListener("load", initGoogleButton, { once: true });
-        return () => script.removeEventListener("load", initGoogleButton);
+        script.addEventListener("load", initGoogle, { once: true });
+        return () => script.removeEventListener("load", initGoogle);
       }
     }
   }, []);
 
+  function handleClick() {
+    if (!window.google || !googleReadyRef.current) {
+      setErrorMessage("Serviço do Google não carregou. Recarregue a página.");
+      return;
+    }
+    if (isLoading) return;
+    setErrorMessage(null);
+
+    window.google.accounts.id.prompt((notification: {
+      isNotDisplayed: () => boolean;
+      isSkippedMoment: () => boolean;
+      getNotDisplayedReason: () => string;
+    }) => {
+      if (notification.isNotDisplayed()) {
+        const reason = notification.getNotDisplayedReason();
+        if (reason === "unregistered_origin") {
+          setErrorMessage("Domínio não autorizado no Google Cloud Console.");
+        } else if (reason === "opt_out_or_no_session") {
+          setErrorMessage("Entre na sua conta Google no navegador e tente novamente.");
+        } else if (reason === "suppressed_by_user") {
+          setErrorMessage("Prompt bloqueado pelo navegador. Tente limpar cookies e recarregar.");
+        } else {
+          setErrorMessage(`Login indisponível (${reason}). Recarregue a página e tente novamente.`);
+        }
+      }
+      // isSkippedMoment = user dismissed → no action needed
+      // isDisplayed / isDismissedMoment → wait for callback
+    });
+  }
 
   return (
     <div className="google-login-wrapper">
@@ -96,14 +111,15 @@ export function GoogleLoginButton({ onLoginSuccess, onClose }: GoogleLoginButton
         <span>ou continue com</span>
       </div>
 
-      {/* Custom styled button (visible) + Google's real button (invisible on top) */}
-      <div ref={containerRef} className="google-login-custom-btn">
-        <div className="google-login-custom-visible" aria-hidden="true">
-          <GoogleIcon />
-          <span>Entrar com Google</span>
-        </div>
-        <div ref={buttonRef} className="google-login-real-btn" />
-      </div>
+      <button
+        type="button"
+        className="google-login-custom-btn"
+        onClick={handleClick}
+        disabled={isLoading}
+      >
+        <GoogleIcon />
+        <span>{isLoading ? "Entrando..." : "Entrar com Google"}</span>
+      </button>
 
       {errorMessage && <p className="login-message">{errorMessage}</p>}
     </div>
