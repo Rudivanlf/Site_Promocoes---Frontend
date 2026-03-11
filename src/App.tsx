@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Settings, Home, BarChart2, Star, StarOff } from "lucide-react";
+import { Settings, Home, BarChart2, Star } from "lucide-react";
 
 import { fetchProducts } from "./features/produtos/Produtos";
 import { getFavorites, addFavorite, removeFavorite, ApiError } from "./shared/utils/favoritesApi";
@@ -438,6 +438,7 @@ menu-item          {data?.sales !== undefined && (
         <select
       className="filter-select"
       value={sortType}
+      onChange={(e) => setSortType(e.target.value)}
       aria-label="Ordenar produtos"
       title="Ordenar produtos"
     >
