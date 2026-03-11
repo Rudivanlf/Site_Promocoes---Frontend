@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Settings, Home, BarChart2, Star } from "lucide-react";
+import { Settings, Home, BarChart2, Star, StarOff } from "lucide-react";
 
 import { fetchProducts } from "./features/produtos/Produtos";
 import { getFavorites, addFavorite, removeFavorite, ApiError } from "./shared/utils/favoritesApi";
@@ -38,11 +38,33 @@ function App() {
   const productsPerPage = 12;
   const [linkInput, setLinkInput] = useState("");
   const [showMenu, setShowMenu] = useState(false);
+  const [sortType, setSortType] = useState("price");
+  const [minPrice, setMinPrice] = useState<number | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+const [theme, setTheme] = useState<"dark" | "light">("dark");
+
 
   useEffect(() => {
     const storedUser = localStorage.getItem("loggedUser");
     setUserEmail(storedUser);
   }, []);
+
+  useEffect(() => {
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "light") {
+    setTheme("light");
+  }
+}, []);
+
+useEffect(() => {
+  document.body.classList.remove("light-theme");
+
+  if (theme === "light") {
+    document.body.classList.add("light-theme");
+  }
+
+  localStorage.setItem("theme", theme);
+}, [theme]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -67,21 +89,6 @@ function App() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userEmail]);
-
-  useEffect(() => {
-    async function loadInitialProducts() {
-      try {
-        const data = await fetchProducts("celular");
-        if (data && data.length > 0) {
-          const sorted = data.sort((a: Product, b: Product) => b.sales - a.sales).slice(0, 8);
-          setProducts(sorted);
-        }
-      } catch (err) {
-        console.error("Erro ao carregar produtos iniciais", err);
-      }
-    }
-    loadInitialProducts();
-  }, []);
 
   async function loadFavorites() {
     try {
@@ -116,12 +123,12 @@ function App() {
   }
 
   async function toggleFavorite(product: Product) {
-    if (!product.link) return;
+  if (!product.link) return;
 
-    if (!userEmail) {
-      setShowLogin(true);
-      return;
-    }
+  if (!userEmail) {
+    setShowLogin(true);
+    return;
+  }
 
     const isCurrentlyFavorite = favorites.includes(product.link);
 
@@ -144,9 +151,14 @@ function App() {
         }
       }
     } else {
-      // Optimistic add
-      setFavorites(prev => [...prev, product.link!]);
-      setFavoriteProducts(prev => [...prev, product]);
+      // Optimistic add sem duplicar
+setFavorites(prev =>
+  prev.includes(product.link!) ? prev : [...prev, product.link!]
+);
+
+setFavoriteProducts(prev =>
+  prev.some(p => p.link === product.link) ? prev : [...prev, product]
+);
 
       try {
         await addFavorite({
@@ -167,9 +179,7 @@ function App() {
         } else if (err instanceof ApiError && err.status === 400) {
           // Already a favorite on backend — optimistic state is correct
         } else {
-          // Revert on unexpected error
-          setFavorites(prev => prev.filter(l => l !== product.link));
-          setFavoriteProducts(prev => prev.filter(p => p.link !== product.link));
+          console.error("Erro ao favoritar:", err);
         }
       }
     }
@@ -195,6 +205,7 @@ function App() {
     } finally {
       setLoading(false);
     }
+    setHasSearched(true);
   }
 
   async function handleSearchByLink(link: string) {
@@ -224,10 +235,31 @@ function App() {
     } finally {
       setLoading(false);
     }
+    setHasSearched(true);
   }
 
   const categories = ["Todas", ...Array.from(new Set(products.map(p => p.category)))];
-  const filteredProducts = selectedCategory === "Todas" ? products : products.filter(p => p.category === selectedCategory);
+let filteredProducts = selectedCategory === "Todas"
+  ? products
+  : products.filter(p => p.category === selectedCategory);
+
+if (minPrice !== null) {
+  filteredProducts = filteredProducts.filter(p => p.price >= minPrice);
+}
+
+let sortedProducts = [...filteredProducts];
+
+if (sortType === "price") {
+  sortedProducts.sort((a, b) => a.price - b.price);
+}
+
+if (sortType === "az") {
+  sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+if (sortType === "za") {
+  sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
+}
 
   const CustomTooltip = (props?: any | null) => {
     const { active, payload } = props ?? {};
@@ -259,8 +291,8 @@ function App() {
 
   const indexOfLast = currentPage * productsPerPage;
   const indexOfFirst = indexOfLast - productsPerPage;
-  const currentProducts = products.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(products.length / productsPerPage);
+  const currentProducts = sortedProducts.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(sortedProducts.length / productsPerPage);
 
   // === PRODUTO SELECIONADO PARA O PAINEL LATERAL ===
   const selectedProduct = favoriteProducts.find((p) => p.link === selectedId) || products.find((p) => p.link === selectedId);
@@ -280,9 +312,30 @@ function App() {
             </div>
           )}
         </div>
-        <button className="login-top-button" onClick={() => userEmail ? setShowLogout(true) : setShowLogin(true)}>
-          {userEmail ? userEmail.charAt(0).toUpperCase() : "Fazer Login"}
-        </button>
+        <div className="navbar-right">
+          
+          <button
+  className="theme-button"
+  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+>
+  {theme === "dark" ? "🌞" : "🌙"}
+</button>
+
+  <button
+    className="login-top-button"
+    onClick={() => userEmail ? setShowLogout(true) : setShowLogin(true)}
+  >
+    {userEmail ? userEmail.charAt(0).toUpperCase() : "Fazer Login"}
+  </button>
+
+  <button
+    className="favorites-button"
+    onClick={() => setPage("favorites")}
+  >
+    <Star size={22} />
+  </button>
+
+</div>
       </div>
 
       {showLogin && (
@@ -332,6 +385,7 @@ function App() {
                 handleSearch(searchInput);
               }
             }}>
+              
               <input
                 className="search-input"
                 type="text"
@@ -356,21 +410,77 @@ function App() {
                 Buscar
               </button>
             </div>
-
+            
             {error && <p className="search-error">{error}</p>}
+
+            {hasSearched && (
+  <div className="filters-bar">
+
+    <select
+      className="filter-select"
+      value={sortType}
+      onChange={(e) => setSortType(e.target.value)}
+    >
+      <option value="price">Ordenar por preço</option>
+      <option value="az">Nome A → Z</option>
+      <option value="za">Nome Z → A</option>
+    </select>
+
+    <input
+      className="filter-input"
+      type="number"
+      placeholder="Preço mínimo"
+      onChange={(e) =>
+        setMinPrice(e.target.value ? Number(e.target.value) : null)
+      }
+    />
+
+    <select
+      className="filter-select"
+      value={selectedCategory}
+      onChange={(e) => setSelectedCategory(e.target.value)}
+    >
+      {categories.map((cat) => (
+        <option key={cat} value={cat}>
+          {cat}
+        </option>
+      ))}
+    </select>
+
+  </div>
+)}
 
             <div className="home-products">
               {currentProducts.map((product) => (
                 <div
-                  key={product.id}
-                  className="home-card"
-                  onClick={() => setSelectedId(product.link ?? null)}
-                >
-                  <img src={product.image} alt={product.name} />
-                  <h3>{product.name}</h3>
-                  <p className="price">R$ {product.price}</p>
-                  <p className="sales">{product.sales} vendas</p>
-                </div>
+  key={product.id}
+  className="home-card"
+  onClick={() => setSelectedId(product.link ?? null)}
+>
+  <div className="card-image-container">
+
+    <img src={product.image} alt={product.name} />
+
+    <div
+      className="favorite-star"
+      onClick={(e) => {
+        e.stopPropagation();
+        toggleFavorite(product);
+      }}
+    >
+      {favorites.includes(product.link ?? "") ? (
+        <Star size={28} fill="#facc15" color="#facc15" />
+      ) : (
+        <Star size={28} color="white" />
+      )}
+    </div>
+
+  </div>
+
+  <h3>{product.name}</h3>
+  <p className="price">R$ {product.price}</p>
+  <p className="sales">{product.sales} vendas</p>
+</div>
               ))}
             </div>
 
@@ -387,57 +497,11 @@ function App() {
             </div>
           </div>
 
-          {selectedProduct && (
-            <div className="side-product">
-              <div className="side-product-header">
-                <button className="buy-button" onClick={() => toggleFavorite(selectedProduct)}>
-                  {favorites.includes(selectedProduct.link ?? "") ? "Desfavoritar" : "Favoritar"}
-                </button>
-                <button className="close-button" onClick={() => setSelectedId(null)}>✕</button>
-              </div>
-              <div className="image-container" onClick={() => toggleFavorite(selectedProduct)}>
-                <img src={selectedProduct.image} alt={selectedProduct.name} className="product-image" />
-                <div className="favorite-star">
-                  {favorites.includes(selectedProduct.link ?? "") ? "⭐" : "☆"}
-                </div>
-              </div>
-              <h2>{selectedProduct.name}</h2>
-              {selectedProduct.link && (
-                <p><a href={selectedProduct.link} target="_blank" rel="noreferrer">Ver no Mercado Livre</a></p>
-              )}
-              <p><strong>Preço:</strong> R$ {selectedProduct.price}</p>
-              <p>{selectedProduct.description}</p>
-              <p><strong>Vendas:</strong> {selectedProduct.sales}</p>
-            </div>
-          )}
         </div>
       )}
 
       {page === "analytics" && (
         <div className="analytics-layout">
-          {selectedProduct && (
-            <div className="side-product">
-              <div className="side-product-header">
-                <button className="buy-button" onClick={() => toggleFavorite(selectedProduct)}>
-                  {favorites.includes(selectedProduct.link ?? "") ? "Desfavoritar" : "Favoritar"}
-                </button>
-                <button className="close-button" onClick={() => setSelectedId(null)}>✕</button>
-              </div>
-              <div className="image-container" onClick={() => toggleFavorite(selectedProduct)}>
-                <img src={selectedProduct.image} alt={selectedProduct.name} className="product-image" />
-                <div className="favorite-star">
-                  {favorites.includes(selectedProduct.link ?? "") ? "⭐" : "☆"}
-                </div>
-              </div>
-              <h2>{selectedProduct.name}</h2>
-              {selectedProduct.link && (
-                <p><a href={selectedProduct.link} target="_blank" rel="noreferrer">Ver no Mercado Livre</a></p>
-              )}
-              <p><strong>Preço:</strong> R$ {selectedProduct.price}</p>
-              <p>{selectedProduct.description}</p>
-              <p><strong>Vendas:</strong> {selectedProduct.sales}</p>
-            </div>
-          )}
 
           <div className="chart-column">
             <div className="chart">
@@ -450,7 +514,7 @@ function App() {
                 </p>
               </div>
               <ResponsiveContainer width="100%" height={380}>
-                <BarChart data={filteredProducts}>
+                <BarChart data={sortedProducts}>
                   <CartesianGrid stroke="#1f2937" strokeDasharray="3 3" />
                   <XAxis dataKey="name" stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
                   <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
@@ -462,7 +526,7 @@ function App() {
                     onClick={handleBarClick}
                     activeBar={{ fill: "#fbbf24", stroke: "#f97316", strokeWidth: 2 }}
                   >
-                    {filteredProducts.map((product) => (
+                    {sortedProducts.map((product) => (
                       <Cell
                         key={product.id}
                         fill={product.link === selectedId ? "#f97316" : "#22c55e"}
@@ -489,39 +553,35 @@ function App() {
 
       {page === "favorites" && (
         <div className="analytics-layout">
-          {selectedProduct && (
-            <div className="side-product">
-              <div className="side-product-header">
-                <button className="buy-button" onClick={() => toggleFavorite(selectedProduct)}>
-                  {favorites.includes(selectedProduct.link ?? "") ? "Desfavoritar" : "Favoritar"}
-                </button>
-                <button className="close-button" onClick={() => setSelectedId(null)}>✕</button>
-              </div>
-              <div className="image-container" onClick={() => toggleFavorite(selectedProduct)}>
-                <img src={selectedProduct.image} alt={selectedProduct.name} className="product-image" />
-                <div className="favorite-star">
-                  {favorites.includes(selectedProduct.link ?? "") ? "⭐" : "☆"}
-                </div>
-              </div>
-              <h2>{selectedProduct.name}</h2>
-              {selectedProduct.link && (
-                <p><a href={selectedProduct.link} target="_blank" rel="noreferrer">Ver no Mercado Livre</a></p>
-              )}
-              <p><strong>Preço:</strong> R$ {selectedProduct.price}</p>
-              <p>{selectedProduct.description}</p>
-              <p><strong>Vendas:</strong> {selectedProduct.sales}</p>
-            </div>
-          )}
+  
 
           <div className="home-products">
             {favorites.length === 0 && <p>Nenhum produto favoritado ainda</p>}
             {favoriteProducts.map((product) => (
               <div
-                key={product.id}
-                className="home-card"
-                onClick={() => setSelectedId(product.link ?? null)}
-              >
-                <img src={product.image} alt={product.name} />
+  key={product.id}
+  className="home-card"
+  onClick={() => setSelectedId(product.link ?? null)}
+>
+<div className="card-image-container">
+
+  <img src={product.image} alt={product.name} />
+
+  <div
+    className="favorite-star"
+    onClick={(e) => {
+      e.stopPropagation();
+      toggleFavorite(product);
+    }}
+  >
+    {favorites.includes(product.link ?? "") ? (
+      <Star size={28} fill="#facc15" color="#facc15" />
+    ) : (
+      <Star size={28} color="white" />
+    )}
+  </div>
+
+</div>
                 <h3>{product.name}</h3>
                 <p className="price">R$ {product.price}</p>
                 <p className="sales">{product.sales} vendas</p>
@@ -530,6 +590,72 @@ function App() {
           </div>
         </div>
       )}
+      {selectedProduct && (
+  <div
+    className="product-modal-overlay"
+    onClick={() => setSelectedId(null)}
+  >
+    <div
+      className="product-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        className="product-modal-close"
+        onClick={() => setSelectedId(null)}
+      >
+        ✕
+      </button>
+
+      <div
+  className="card-image-container modal-image"
+  onClick={() => toggleFavorite(selectedProduct)}
+>
+  <img
+    src={selectedProduct.image}
+    alt={selectedProduct.name}
+    className="product-modal-image"
+  />
+
+  <div
+    className="favorite-star"
+    onClick={(e) => {
+      e.stopPropagation();
+      toggleFavorite(selectedProduct);
+    }}
+  >
+    {favorites.includes(selectedProduct.link ?? "") ? (
+      <Star size={28} fill="#facc15" color="#facc15" />
+    ) : (
+      <Star size={28} color="white" />
+    )}
+  </div>
+</div>
+
+      <h2>{selectedProduct.name}</h2>
+
+      {selectedProduct.link && (
+        <p>
+          <a href={selectedProduct.link} target="_blank" rel="noreferrer">
+            Ver no Mercado Livre
+          </a>
+        </p>
+      )}
+
+      <p><strong>Preço:</strong> R$ {selectedProduct.price}</p>
+      <p>{selectedProduct.description}</p>
+      <p><strong>Vendas:</strong> {selectedProduct.sales}</p>
+
+      <button
+        className="buy-button"
+        onClick={() => toggleFavorite(selectedProduct)}
+      >
+        {favorites.includes(selectedProduct.link ?? "")
+          ? "Desfavoritar"
+          : "Favoritar"}
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }
