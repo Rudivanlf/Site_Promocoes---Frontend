@@ -451,7 +451,7 @@ menu-item          {data?.sales !== undefined && (
       type="number"
       placeholder="Preço mínimo"
       aria-label="Preço mínimo"
-      title="Preço mínim"
+      title="Preço mínimo"
       onChange={(e) =>
         setMinPrice(e.target.value ? Number(e.target.value) : null)
       }
