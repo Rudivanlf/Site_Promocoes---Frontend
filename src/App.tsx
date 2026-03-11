@@ -450,6 +450,8 @@ menu-item          {data?.sales !== undefined && (
       className="filter-input"
       type="number"
       placeholder="Preço mínimo"
+      aria-label="Preço mínimo"
+      title="Preço mínim"
       onChange={(e) =>
         setMinPrice(e.target.value ? Number(e.target.value) : null)
       }
