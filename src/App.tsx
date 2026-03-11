@@ -272,7 +272,7 @@ if (sortType === "za") {
           <span className="chart-tooltip-price">
             R$ {typeof data?.price === "number" ? data.price.toFixed(2) : data?.price}
           </span>
-          {data?.sales !== undefined && (
+menu-item          {data?.sales !== undefined && (
             <span className="chart-tooltip-sales">{data.sales} vendas</span>
           )}
         </div>
@@ -306,9 +306,24 @@ if (sortType === "za") {
           </div>
           {showMenu && (
             <div className="dropdown-menu show">
-              <button onClick={() => { setPage("home"); setShowMenu(false); }} className="menu-item" data-tooltip="Home"><Home className="w-5 h-5" /></button>
-              <button onClick={() => { setPage("analytics"); setShowMenu(false); }} className="menu-item" data-tooltip="Analytics"><BarChart2 className="w-5 h-5" /></button>
-              <button onClick={() => { setPage("favorites"); setShowMenu(false); }} className="menu-item" data-tooltip="Favoritos"><Star className="w-5 h-5" /></button>
+                        <button
+            className="menu-item"
+            data-tooltip="Home"
+            aria-label="Página inicial"
+            title="Home"
+              ><Home className="w-5 h-5" /></button>
+                        <button
+            className="menu-item"
+            data-tooltip="Analytics"
+            aria-label="Analytics"
+            title="Analytics"
+          ><BarChart2 className="w-5 h-5" /></button>
+                        <button
+            className="menu-item"
+            data-tooltip="Favoritos"
+            aria-label="Favoritos"
+            title="Favoritos"
+          ><Star className="w-5 h-5" /></button>
             </div>
           )}
         </div>
@@ -317,6 +332,8 @@ if (sortType === "za") {
           <button
   className="theme-button"
   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+  aria-label="Alternar tema"
+  title="Alternar tema"
 >
   {theme === "dark" ? "🌞" : "🌙"}
 </button>
@@ -328,10 +345,12 @@ if (sortType === "za") {
     {userEmail ? userEmail.charAt(0).toUpperCase() : "Fazer Login"}
   </button>
 
-  <button
-    className="favorites-button"
-    onClick={() => setPage("favorites")}
-  >
+<button
+  className="favorites-button"
+  onClick={() => setPage("favorites")}
+  aria-label="Abrir favoritos"
+  title="Favoritos"
+>
     <Star size={22} />
   </button>
 
@@ -416,10 +435,11 @@ if (sortType === "za") {
             {hasSearched && (
   <div className="filters-bar">
 
-    <select
+        <select
       className="filter-select"
       value={sortType}
-      onChange={(e) => setSortType(e.target.value)}
+      aria-label="Ordenar produtos"
+      title="Ordenar produtos"
     >
       <option value="price">Ordenar por preço</option>
       <option value="az">Nome A → Z</option>
@@ -435,11 +455,12 @@ if (sortType === "za") {
       }
     />
 
-    <select
-      className="filter-select"
-      value={selectedCategory}
-      onChange={(e) => setSelectedCategory(e.target.value)}
-    >
+          <select
+        className="filter-select"
+        value={selectedCategory}
+        aria-label="Filtrar categoria"
+        title="Filtrar categoria"
+      >
       {categories.map((cat) => (
         <option key={cat} value={cat}>
           {cat}
