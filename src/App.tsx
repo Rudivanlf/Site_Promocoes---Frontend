@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Settings, Home, BarChart2, Star, ArrowLeft, X } from "lucide-react";
 
 import { fetchProducts } from "./features/produtos/Produtos";
 import { getFavorites, addFavorite, removeFavorite, ApiError } from "./shared/utils/favoritesApi";
@@ -13,7 +14,6 @@ import {
 } from "./features/products/productSelectors";
 import { normalizeSearchValue, isMercadoLivreLink, extractQueryFromMercadoLivreLink } from "./features/search/searchUtils";
 import { Navbar } from "./components/Navbar/Navbar";
-import { ArrowLeft } from "lucide-react";
 import { SearchBar } from "./components/SearchBar/SearchBar";
 import { Hero } from "./components/home/Hero/Hero";
 import { ProductGrid } from "./components/products/ProductGrid/ProductGrid";
@@ -26,15 +26,14 @@ import AppModal, { type TabId } from "./components/AppModal/AppModal";
 import "./components/OffersTopbar/OffersTopbar.css";
 import { AICalendarSection } from "./components/calendar/AICalendarSection";
 import type { Product } from "./types/product";
-
 import "./features/login/AuthModals.css";
+import "./App.css";
 
 type Theme = "dark" | "light";
 type Page = "home" | "results" | "analytics" | "calendar" | "favorites";
 
 const THEME_STORAGE_KEY = "site-theme";
 const DEFAULT_RESULTS_QUERY = "celular";
-// STORE_OPTIONS removed — store filtering handled differently now
 const PAGE_PATHS: Record<Page, string> = {
   home: "/",
   results: "/produtos",
@@ -82,7 +81,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todas");
   const [searchInput, setSearchInput] = useState("");
-  
+
   const [showRegister, setShowRegister] = useState(false);
   const [page, setPage] = useState<Page>(() => getPageFromPath(window.location.pathname));
   const [theme, setTheme] = useState<Theme>(() => {
@@ -92,16 +91,15 @@ function App() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 12;
   const [appModalOpen, setAppModalOpen] = useState(false);
   const [appModalTab, setAppModalTab] = useState<TabId>("account");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
-  // selectedStores state removed
-  // minRating removed
   const [isResultsScrolled, setIsResultsScrolled] = useState(false);
   const [hasAttemptedResultsPrefill, setHasAttemptedResultsPrefill] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const maxAvailablePrice = Math.max(
     10000,
@@ -175,7 +173,6 @@ function App() {
     setPage(nextPage);
   }
 
-  // Load/clear favorites whenever the logged-in user changes
   useEffect(() => {
     if (userEmail) {
       loadFavorites();
@@ -183,7 +180,6 @@ function App() {
       setFavorites([]);
       setFavoriteProducts([]);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userEmail]);
 
   async function loadFavorites() {
@@ -208,7 +204,6 @@ function App() {
 
   async function toggleFavorite(product: Product) {
     if (!product.link) return;
-
     if (!userEmail) {
       setAppModalTab('account');
       setAppModalOpen(true);
@@ -218,28 +213,21 @@ function App() {
     const isCurrentlyFavorite = favorites.includes(product.link);
 
     if (isCurrentlyFavorite) {
-      // Optimistic remove
       setFavorites(prev => prev.filter(l => l !== product.link));
       setFavoriteProducts(prev => prev.filter(p => p.link !== product.link));
-
       try {
         await removeFavorite(product.link);
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
           handleLogout();
-        } else if (err instanceof ApiError && err.status === 404) {
-          // Already removed on backend — state already correct
         } else {
-          // Revert on unexpected error
           setFavorites(prev => [...prev, product.link!]);
           setFavoriteProducts(prev => [...prev, product]);
         }
       }
     } else {
-      // Optimistic add
-      setFavorites(prev => [...prev, product.link!]);
-      setFavoriteProducts(prev => [...prev, product]);
-
+      setFavorites(prev => prev.includes(product.link!) ? prev : [...prev, product.link!]);
+      setFavoriteProducts(prev => prev.some(p => p.link === product.link) ? prev : [...prev, product]);
       try {
         await addFavorite({
           link: product.link,
@@ -254,12 +242,6 @@ function App() {
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
           handleLogout();
-          setFavorites(prev => prev.filter(l => l !== product.link));
-          setFavoriteProducts(prev => prev.filter(p => p.link !== product.link));
-        } else if (err instanceof ApiError && err.status === 400) {
-          // Already a favorite on backend — optimistic state is correct
-        } else {
-          // Revert on unexpected error
           setFavorites(prev => prev.filter(l => l !== product.link));
           setFavoriteProducts(prev => prev.filter(p => p.link !== product.link));
         }
@@ -296,6 +278,7 @@ function App() {
     } finally {
       setLoading(false);
     }
+    setHasSearched(true);
   }
 
   async function handleSearchByLink(link: string) {
@@ -329,6 +312,7 @@ function App() {
     } finally {
       setLoading(false);
     }
+    setHasSearched(true);
   }
 
   const handleUnifiedSearch = (value: string) => {
@@ -352,14 +336,8 @@ function App() {
 
   const filteredHomeProducts = products.filter((product) => {
     const numericPrice = Number(product.price) || 0;
-    const store = extractStore(product);
-    const rating = extractRating(product);
-
     const byPrice = numericPrice >= priceRange[0] && numericPrice <= priceRange[1];
-    const byStore = true;
-    const byRating = true;
-
-    return byPrice && byStore && byRating;
+    return byPrice;
   });
 
   const handleBarClick = (data: unknown) => {
@@ -373,7 +351,6 @@ function App() {
   const currentProducts = selectProductsPage(filteredHomeProducts, currentPage, productsPerPage);
   const totalPages = selectProductsTotalPages(filteredHomeProducts, productsPerPage);
 
-  // === PRODUTO SELECIONADO PARA O PAINEL LATERAL ===
   const selectedProduct = selectSelectedProduct(products, favoriteProducts, selectedId);
 
   return (
@@ -398,7 +375,6 @@ function App() {
         userEmail={userEmail}
         onLoginSuccess={(email: string) => {
           setUserEmail(email);
-          // do not close modal here; AppModal will switch to favorites
         }}
         onLogout={() => {
           localStorage.removeItem('authToken');
@@ -409,6 +385,7 @@ function App() {
         favoriteProducts={favoriteProducts}
         onToggleFavorite={toggleFavorite}
       />
+
       {showRegister && (
         <CadastroModal
           onClose={() => setShowRegister(false)}
@@ -416,7 +393,6 @@ function App() {
           onLoginSuccess={(email: string) => { setUserEmail(email); setShowRegister(false); }}
         />
       )}
-      
 
       {page === "home" && (
         <div className="home-layout">
@@ -478,8 +454,6 @@ function App() {
                       </div>
                     </div>
                   )}
-
-                  {/* search moved to fixed header - removed duplicate search bar here */}
 
                   <div className="productsPageLayout">
                     <ProductsFilterSidebar
