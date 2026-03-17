@@ -1,0 +1,250 @@
+:root,
+[data-theme="dark"] {
+  --color-primary: #0a0a0a;
+  --color-secondary: #1a1a1a;
+  --color-accent: #22c55e;
+  --color-accent-dark: #16a34a;
+  --color-accent-light: #4ade80;
+  --color-text: #f0f0f0;
+  --color-text-secondary: #a0a0a0;
+  --color-border: #2a2a2a;
+  --color-error: #ef4444;
+  --color-success: #22c55e;
+  --surface-primary: rgba(0, 0, 0, 0.9);
+    --color-accent: #39ff14;
+    --color-accent-dark: #22c55e;
+    --color-accent-light: #a6ff7a;
+  --scrollbar-track: rgba(26, 26, 46, 0.5);
+  --app-bg-gradient: linear-gradient(
+     -45deg,
+  #000814,
+  #0d2e14,
+  #051a2e,
+  #0a2010,
+  #000814
+  );
+
+  
+  color-scheme: dark;
+
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--color-text);
+  background-color: var(--color-primary);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+[data-theme="light"] {
+  --color-primary: #f6faf8;
+  --color-secondary: #eaf3ef;
+  --color-accent: #15803d;
+  --color-accent-dark: #166534;
+  --color-accent-light: #16a34a;
+  --color-text: #0f1c17;
+  --color-text-secondary: #446056;
+  --color-border: #c6ddd2;
+  --color-error: #dc2626;
+  --color-success: #15803d;
+  --surface-primary: rgba(255, 255, 255, 0.88);
+  --surface-secondary: rgba(233, 244, 237, 0.9);
+  --body-bg-gradient: linear-gradient(135deg, #edf7f2 0%, #dbeee4 100%);
+  --app-bg-gradient: linear-gradient(-45deg, #edf7f2 0%, #dcefe6 20%, #cfe9dc 45%, #d8efe3 70%, #e9f6f0 100%);
+  --scrollbar-track: rgba(183, 206, 194, 0.55);
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+html,
+body,
+#root {
+  background: var(--app-bg-gradient);
+  background-size: 200% 100%;
+  animation: gradientShift 6s ease-in-out infinite alternate;
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--body-bg-gradient);
+}
+
+a {
+  font-weight: 500;
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+a:hover {
+  color: var(--color-accent-light);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+  color: var(--color-text);
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+  cursor: pointer;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 0.6rem 1.1rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%);
+    color: #03150d;
+    cursor: pointer;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    box-shadow: 0 8px 28px rgba(57,255,20,0.08), 0 2px 8px rgba(0,0,0,0.6);
+  transform: translateY(0);
+}
+
+button:hover,
+button:focus {
+  background: linear-gradient(135deg, var(--color-accent-light) 0%, var(--color-accent) 100%);
+  box-shadow: 0 10px 40px rgba(57,255,20,0.18), 0 6px 24px rgba(0,0,0,0.6);
+  transform: translateY(-3px) scale(1.01);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 8px;
+    background-color: rgba(255,255,255,0.02);
+    color: var(--color-text);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+  background-color: rgba(34, 197, 94, 0.05);
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+textarea::placeholder {
+  color: var(--color-text-secondary);
+}
+
+  /* Utility helpers for neon look */
+  .neon-text {
+    color: var(--color-accent);
+    text-shadow: 0 0 10px rgba(57,255,20,0.18), 0 0 28px rgba(57,255,20,0.06);
+  }
+
+  .neon-outline {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--color-accent);
+    text-shadow: 0 0 10px rgba(57,255,20,0.18);
+  }
+
+  .card {
+    background: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(2,10,8,0.6));
+    border: 1px solid rgba(57,255,20,0.08);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 24px rgba(57,255,20,0.04);
+    border-radius: 14px;
+    padding: 1rem;
+  }
+
+  .glass {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    backdrop-filter: blur(6px) saturate(120%);
+    border-radius: 12px;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-accent);
+    border: 1px solid rgba(57,255,20,0.12);
+    box-shadow: none;
+  }
+
+  .btn-ghost:hover { 
+    background: rgba(57,255,20,0.04);
+  }
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--color-accent) 0%, var(--color-accent-dark) 100%);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-light);
+}

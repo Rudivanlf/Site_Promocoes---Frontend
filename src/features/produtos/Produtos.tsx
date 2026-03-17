@@ -1,4 +1,4 @@
-import type { Product } from "../../mocks/products";
+import type { Product } from "../../types/product";
 
 const API_BASE_URL = (import.meta.env.VITE_BASE_API_URL as string | undefined)?.trim() || "";
 

@@ -1,15 +1,7 @@
-import ProductCard from "./ProductCard";
 
-export interface Product {
-  id: number;
-  name: string;
-  price: number;
-  description: string;
-  sales: number;
-  image: string;
-  link?: string;
-  category: string;
-}
+import ProductCard from "./ProductCard";
+import type { Product } from "../../types/product";
+import "./ProductGrid.css";
 
 interface ProductGridProps {
   products: Product[];
@@ -20,15 +12,15 @@ interface ProductGridProps {
 
 export default function ProductGrid({ products, favorites, toggleFavorite, onSelectProduct }: ProductGridProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="home-products">
       {products.map((product) => (
-        <div 
-          key={product.id} 
+        <div
+          key={product.id}
           className="transition-all duration-200 hover:-translate-y-1 cursor-pointer"
-          onClick={() => onSelectProduct(product.link ?? "")} // <--- E o clique aqui!
+          onClick={() => onSelectProduct(product.link ?? "")}
         >
-          <ProductCard 
-            product={product} 
+          <ProductCard
+            product={product}
             isFavorite={favorites.includes(product.link ?? "")}
             onToggleFavorite={() => toggleFavorite(product)}
           />

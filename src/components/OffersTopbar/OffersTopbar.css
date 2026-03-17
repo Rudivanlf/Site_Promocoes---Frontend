@@ -1,0 +1,165 @@
+.products-fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  width: 100%;
+  height: 88px;
+
+  background: linear-gradient(90deg, #03150d 0%, #06271b 50%, #03150d 100%);
+  border-bottom: 1px solid rgba(57, 255, 20, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.products-fixed-header__inner {
+  width: 100%;
+  max-width: 1440px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.products-fixed-header__search {
+  flex: 1 1 480px;
+  max-width: 720px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.products-fixed-header__left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.products-fixed-header__back {
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #39ff14 0%, #22c55e 100%);
+  color: #03150d;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  padding: 6px; /* hit area */
+  box-shadow: 0 6px 22px rgba(57,255,20,0.28), inset 0 0 18px rgba(255,255,255,0.02);
+}
+
+.products-fixed-header__back:hover {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 10px 30px rgba(57,255,20,0.32), inset 0 0 20px rgba(255,255,255,0.02);
+}
+
+.products-fixed-header__back svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+}
+
+.products-fixed-header__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.products-fixed-header__info h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  line-height: 1;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.products-fixed-header__info h1 span { color: #39ff14; }
+
+.products-fixed-header__info p {
+  margin: 0.35rem 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.products-fixed-header__login {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.products-fixed-header__login-button {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(57,255,20,0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(3,8,10,0.9) 0%, rgba(6,27,23,0.9) 100%);
+  color: #39ff14;
+  cursor: pointer;
+  box-shadow: 0 8px 30px rgba(57,255,20,0.18), inset 0 0 14px rgba(57,255,20,0.03);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+
+.products-fixed-header__login-button:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 12px 40px rgba(57,255,20,0.28), inset 0 0 18px rgba(57,255,20,0.04);
+}
+
+.products-fixed-header__login-button {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(57,255,20,0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(3,8,10,0.9) 0%, rgba(6,27,23,0.9) 100%);
+  color: #39ff14;
+  cursor: pointer;
+  box-shadow: 0 8px 30px rgba(57,255,20,0.18), inset 0 0 14px rgba(57,255,20,0.03);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+  padding: 0;
+  overflow: visible;
+}
+
+.products-fixed-header__login-button svg {
+  display: block;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px;
+  min-height: 32px;
+  color: #39ff14;
+  stroke: #39ff14;
+  flex-shrink: 0;
+}
+
+.products-fixed-header__left { z-index: 1100; }
+.products-fixed-header__search { z-index: 1090; }
+.products-fixed-header__login { z-index: 1100; }
+
+.products-page__content {
+  padding-top: 88px; /* match header height so content sits directly below */
+}
+
+@media (max-width: 768px) {
+  .products-fixed-header__inner { padding: 0 1rem; }
+  .products-fixed-header__info h1 { font-size: 1.25rem; }
+}

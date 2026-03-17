@@ -1,0 +1,214 @@
+.analytics-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  padding: 3rem;
+  flex: 1;
+  align-items: start;
+}
+
+.analytics-layout .side-product {
+  flex: 0 0 320px;
+  width: 320px;
+  animation: slideInPanel 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chart-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: sticky;
+  top: 100px;
+  align-self: start;
+}
+
+.chart {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(13, 59, 43, 0.15) 100%);
+  border: 2px solid rgba(34, 197, 94, 0.4);
+  border-radius: 12px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.2), 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(34, 197, 94, 0.1);
+}
+
+.chart-header {
+  margin-bottom: 1.25rem;
+}
+
+.chart-title {
+  color: #22c55e;
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+  margin: 0 0 0.25rem 0;
+}
+
+.chart-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+  transition: color 0.3s ease;
+  font-style: italic;
+}
+
+.chart-hint.has-selection {
+  color: #f97316;
+}
+
+.recharts-bar-rectangle {
+  cursor: pointer;
+}
+
+.chart-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 10px;
+  background: rgba(5, 10, 15, 0.92);
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  box-shadow:
+    0 0 18px rgba(34, 197, 94, 0.2),
+    0 6px 24px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: none;
+  max-width: 220px;
+}
+
+.chart-tooltip-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #d1fae5;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  letter-spacing: 0.2px;
+  line-clamp: 2;
+}
+
+.chart-tooltip-price {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #22c55e;
+  text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+  letter-spacing: 0.5px;
+}
+
+.chart-tooltip-sales {
+  font-size: 0.72rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+@keyframes slideInPanel {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.categories {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(13, 59, 43, 0.15) 100%);
+  padding: 2rem;
+  border-radius: 12px;
+  border: 2px solid rgba(34, 197, 94, 0.4);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.2), 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(34, 197, 94, 0.1);
+}
+
+.categories h3 {
+  color: #22c55e;
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  margin-bottom: 0.5rem;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.category-item:hover {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: #22c55e;
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.3), inset 0 0 10px rgba(34, 197, 94, 0.1);
+  color: #4ade80;
+}
+
+.category-circle {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(34, 197, 94, 0.3);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.category-circle.active {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.category-item span {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .analytics-layout {
+    flex-direction: column;
+    padding: 1.5rem;
+  }
+
+  .chart-column {
+    position: static;
+    width: 100%;
+  }
+
+  .chart {
+    position: static;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-layout {
+    padding: 1rem;
+  }
+
+  .categories {
+    padding: 1.5rem;
+  }
+
+  .categories h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .category-item {
+    padding: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+}

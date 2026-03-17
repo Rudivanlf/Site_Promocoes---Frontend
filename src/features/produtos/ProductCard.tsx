@@ -1,5 +1,5 @@
 import { Heart, ExternalLink, ShoppingCart, Star } from "lucide-react";
-import type { Product } from "./ProductGrid";
+import type { Product } from "../../types/product";
 
 interface ProductCardProps {
   product: Product;

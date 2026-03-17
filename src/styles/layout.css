@@ -1,0 +1,40 @@
+#root {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--app-bg-gradient);
+  background-size: 400% 400%;
+  animation: gradientShift 20s ease infinite;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  position: relative;
+  z-index: 2;
+  margin-top: 80px;
+}
+
+@media (max-width: 768px) {
+  .home-layout {
+    padding: 1.5rem;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0;
+  }
+
+  .home-layout {
+    padding: 1rem;
+  }
+}

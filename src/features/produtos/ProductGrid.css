@@ -1,0 +1,13 @@
+.home-products {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 1280px;
+  gap: 0.7rem;
+  margin-top: 1.2rem;
+}
+
+@media (max-width: 1200px) {
+  .home-products {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,0 +1,573 @@
+.home-layout {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+  padding: 1.6rem 1.5rem 2rem;
+}
+
+.home-layout.active {
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+
+.home-main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.resultsLoadingState {
+  min-height: 54vh;
+  border-radius: 16px;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.82) 0%, rgba(4, 16, 14, 0.86) 100%);
+  display: grid;
+  place-content: center;
+  gap: 0.45rem;
+  text-align: center;
+  box-shadow:
+    0 0 18px rgba(34, 197, 94, 0.12),
+    inset 0 0 0 1px rgba(74, 222, 128, 0.08);
+}
+
+.resultsLoadingTitle {
+  color: #22c55e;
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.resultsLoadingSubtitle {
+  color: #b5c0cb;
+  font-weight: 700;
+}
+
+.resultsSearchWrap {
+  transition: opacity 0.24s ease, transform 0.24s ease, max-height 0.24s ease, margin 0.24s ease;
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 120px;
+}
+
+.resultsSearchWrapHidden {
+  opacity: 0;
+  transform: translateY(-12px);
+  max-height: 0;
+  overflow: hidden;
+  margin: 0;
+}
+
+.resultsCompactBar {
+  position: sticky;
+  top: 10px;
+  z-index: 95;
+  min-height: 68px;
+  border-radius: 14px;
+  border: 1px solid rgba(34, 197, 94, 0.24);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.88) 0%, rgba(4, 14, 12, 0.9) 100%);
+  box-shadow:
+    0 0 16px rgba(34, 197, 94, 0.12),
+    0 12px 26px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 0.9rem;
+}
+
+.resultsBackButton {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(0, 0, 0, 0.5);
+  color: #d8e0ea;
+  font-size: 1.2rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resultsCompactInfo {
+  min-width: 0;
+}
+
+.resultsCompactTitle {
+  color: #d8e0ea;
+  font-size: 1.15rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.resultsCompactTitle span {
+  color: #22c55e;
+}
+
+.resultsCompactCount {
+  margin-top: 0.2rem;
+  color: #9ca3af;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+
+.productsPageLayout {
+  width: 100%;
+  max-width: 1440px; /* align with header inner */
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+  margin-top: 0;
+}
+
+.productsFilterSidebar {
+  position: sticky;
+  top: 88px; /* align sticky start directly under fixed header */
+  border-radius: 18px;
+  border: 1px solid rgba(34, 197, 94, 0.26);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.84) 0%, rgba(4, 16, 14, 0.8) 100%);
+  box-shadow:
+    0 0 18px rgba(34, 197, 94, 0.14),
+    0 16px 38px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+/* Remove extra horizontal padding from .home-layout when inside products page so columns align with header */
+.products-page__content.home-layout {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.filtersToggleButton {
+  display: none;
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.5);
+  color: #22c55e;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.filtersContent {
+  padding: 1.25rem;
+}
+
+.filterTitle {
+  color: #39ff14;
+  font-size: 1.55rem;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 0 18px rgba(57,255,20,0.45);
+}
+
+.filterSection {
+  margin-bottom: 1.45rem;
+}
+
+.filterSection:last-child {
+  margin-bottom: 0;
+}
+
+.filterSectionTitle {
+  color: #d2ffe2;
+  font-size: 1.02rem;
+  font-weight: 800;
+  margin-bottom: 0.85rem;
+}
+
+.priceRangeWrapper {
+  position: relative;
+}
+
+.priceRangeTrack {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.16);
+  overflow: hidden;
+  margin: 0.35rem 0 0.75rem;
+}
+
+.priceRangeFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #22c55e 0%, #4ade80 100%);
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.36);
+}
+
+.priceRangeInput {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  top: -2px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.1);
+  outline: none;
+  pointer-events: none;
+}
+
+.priceRangeInput::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #39ff14;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(57,255,20,0.6), 0 0 16px rgba(57,255,20,0.3);
+  border: 2px solid #03150d;
+  pointer-events: auto;
+}
+
+.priceRangeInput::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #39ff14;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(57,255,20,0.6);
+  border: 2px solid #03150d;
+}
+
+/* If using dual-range (two overlaid inputs): hide the native tracks and draw a custom fill div */
+input[type="range"].range-min::-webkit-slider-runnable-track,
+input[type="range"].range-min::-moz-range-track {
+  background: transparent !important;
+}
+
+input[type="range"].range-max::-webkit-slider-runnable-track,
+input[type="range"].range-max::-moz-range-track {
+  background: transparent !important;
+}
+
+/* Base track (dark gray) */
+.slider-track-base {
+  background: rgba(255,255,255,0.08);
+  height: 4px;
+  border-radius: 2px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+
+/* Green fill between thumbs */
+.slider-track-fill {
+  position: absolute;
+  height: 100%;
+  background: #39ff14;
+  box-shadow: 0 0 8px rgba(57,255,20,0.5);
+  border-radius: 2px;
+  top: 0;
+}
+
+/* Ensure thumbs remain interactive even when inputs have pointer-events:none */
+.priceRangeInput::-webkit-slider-thumb {
+  pointer-events: auto;
+}
+.priceRangeInput::-moz-range-thumb {
+  pointer-events: auto;
+}
+
+.priceRangeValues {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #b5c0cb;
+  font-weight: 700;
+  margin-top: 1.1rem;
+}
+
+.storeList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.storeOption {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  background: rgba(0, 0, 0, 0.38);
+  color: #d8e0ea;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0 0.75rem;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.storeOption:disabled {
+  cursor: not-allowed;
+}
+
+.storeOptionDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.8px solid #22c55e;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
+  flex-shrink: 0;
+}
+
+.storeOptionActive {
+  border-color: rgba(74, 222, 128, 0.6);
+  background: rgba(34, 197, 94, 0.14);
+  color: #bfffd5;
+}
+
+.storeOptionActive .storeOptionDot {
+  background: #22c55e;
+}
+
+.storeOptionPending {
+  border-color: rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.35);
+  color: #9ca3af;
+}
+
+.storeOptionPending .storeOptionDot {
+  border-color: #64748b;
+  box-shadow: none;
+}
+
+.ratingStarsControl {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  user-select: none;
+}
+
+.ratingStarButton {
+  min-width: 0 !important;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(34, 197, 94, 0.32);
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+  transition: transform 0.18s ease, color 0.18s ease, text-shadow 0.18s ease;
+}
+
+.ratingStarButton.active {
+  color: #49df81;
+  text-shadow: 0 0 12px rgba(34, 197, 94, 0.55);
+}
+
+.ratingStarButton:hover {
+  transform: scale(1.14);
+  color: #4ade80;
+  text-shadow: 0 0 16px rgba(34, 197, 94, 0.6);
+}
+
+.ratingStarButton:focus-visible {
+  outline: 2px solid rgba(74, 222, 128, 0.75);
+  outline-offset: 1px;
+}
+
+.productsContentArea {
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .home-layout.active {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .productsPageLayout {
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 880px) {
+  .productsPageLayout {
+    grid-template-columns: 1fr;
+  }
+
+
+  .productsFilterSidebar {
+    position: static;
+    top: auto;
+  }
+
+  .filtersToggleButton {
+    display: block;
+  }
+
+  .filtersContent {
+    display: none;
+  }
+
+  .filtersContent.expanded {
+    display: block;
+  }
+
+  .resultsCompactBar {
+    top: 8px;
+    min-height: 62px;
+  }
+
+  .resultsCompactTitle {
+    font-size: 1rem;
+  }
+
+  .resultsCompactCount {
+    font-size: 0.86rem;
+  }
+}
+
+/* === Neon-green overrides (mapped from requested selectors) === */
+
+/* Slider range — trilha e thumb verdes (mapped to existing slider classes) */
+.priceRangeInput {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, #39ff14 var(--value, 50%), rgba(255,255,255,0.1) var(--value, 50%));
+  outline: none;
+  cursor: pointer;
+}
+
+.priceRangeInput::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #39ff14;
+  border: 2px solid #03150d;
+  box-shadow: 0 0 10px rgba(57,255,20,0.5), 0 0 20px rgba(57,255,20,0.2);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.priceRangeInput::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 16px rgba(57,255,20,0.7), 0 0 30px rgba(57,255,20,0.3);
+}
+
+.priceRangeInput::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #39ff14;
+  border: 2px solid #03150d;
+  box-shadow: 0 0 10px rgba(57,255,20,0.5);
+  cursor: pointer;
+}
+
+.priceRangeInput::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.1);
+}
+
+/* Botões de loja (mapped to .storeOption) */
+.storeOption {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(57,255,20,0.15);
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.storeOption:hover {
+  border-color: rgba(57,255,20,0.35);
+  color: #fff;
+  background: rgba(57,255,20,0.05);
+}
+
+.storeOptionActive {
+  border-color: rgba(57,255,20,0.5);
+  background: rgba(57,255,20,0.1);
+  color: #39ff14;
+}
+
+/* Círculo indicador de seleção (mapped to .storeOptionDot) */
+.storeOptionDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(57,255,20,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.storeOptionActive .storeOptionDot {
+  border-color: #39ff14;
+  background: #39ff14;
+  box-shadow: 0 0 8px rgba(57,255,20,0.4);
+}
+
+.storeOptionActive .storeOptionDot::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #03150d;
+}
+
+/* Rating stars (mapped to .ratingStarButton) */
+.ratingStarButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(57,255,20,0.15);
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ratingStarButton:hover,
+.ratingStarButton.active {
+  border-color: rgba(57,255,20,0.4);
+  background: rgba(57,255,20,0.08);
+  color: #39ff14;
+}
+
+/* End neon-green overrides */

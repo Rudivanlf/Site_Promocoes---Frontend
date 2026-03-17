@@ -217,5 +217,14 @@ export function loginUser(payload: AuthPayload): Promise<AuthResult> {
     methods: LOGIN_METHODS,
     fallbackError: "Email ou senha invalidos.",
     operationName: "login"
+  }).then((result) => {
+    if (result.token) {
+      try {
+        localStorage.setItem("authToken", result.token);
+      } catch (e) {
+        // ignore storage errors
+      }
+    }
+    return result;
   });
 }

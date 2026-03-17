@@ -1,0 +1,190 @@
+.productCard {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.84) 0%, rgba(5, 14, 12, 0.84) 100%);
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+  padding: 0.7rem 0.7rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  box-sizing: border-box;
+}
+
+.productImageArea {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: inherit;
+}
+
+/* Trava a área da imagem para evitar cards esticados */
+.productImageArea {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: inherit;
+}
+
+.badgeLeft {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  min-height: 32px;
+  border-radius: 999px;
+  padding: 0 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 800;
+  font-size: 0.86rem;
+  letter-spacing: 0;
+  z-index: 2;
+  background: #39FF14;
+  color: #03150d;
+}
+
+.badgeRight {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  min-height: 32px;
+  border-radius: 999px;
+  padding: 0 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 800;
+  font-size: 0.86rem;
+  letter-spacing: 0;
+  z-index: 2;
+  background: #39FF14;
+  color: #03150d;
+}
+
+.productBody {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  padding: 0.5rem 0.6rem 0.6rem;
+  gap: 0.45rem;
+}
+
+.productImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.storeLabel {
+  color: #98a2b3;
+  font-size: 0.8rem;
+  margin-bottom: 0.35rem;
+  min-height: 24px;
+}
+
+.productTitle {
+  color: #e9f8ef;
+  font-size: 0.96rem;
+  font-weight: 700;
+  line-height: 1.35;
+  min-height: 58px;
+  margin-bottom: 0.45rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.oldPrice {
+  color: #8f98a8;
+  text-decoration: line-through;
+  margin-bottom: 0.2rem;
+  min-height: 24px;
+}
+
+.currentPrice {
+  color: #39FF14;
+  font-size: 1.3rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+  text-shadow: 0 0 8px rgba(34, 197, 94, 0.18);
+  min-height: 40px;
+}
+
+.cardActions {
+  display: grid;
+  grid-template-columns: 1fr 48px;
+  gap: 0.55rem;
+  margin-top: auto;
+  align-items: center;
+}
+
+.offerButton {
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #39FF14;
+  color: #03150d;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.alertButton {
+  height: 44px;
+  min-width: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  background: rgba(0, 0, 0, 0.46);
+  color: #d8e0ea;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .currentPrice {
+    font-size: 1.65rem;
+  }
+
+  .productTitle {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .badgeLeft,
+  .badgeRight {
+    top: 10px;
+    min-height: 28px;
+    padding: 0 0.6rem;
+    font-size: 0.76rem;
+  }
+
+  .productBody {
+    padding: 0.7rem;
+  }
+
+  .currentPrice {
+    font-size: 1.35rem;
+  }
+}
+
+.alertButtonActive {
+  color: #39FF14;
+  border-color: rgba(57, 255, 20, 0.5);
+  background: rgba(57, 255, 20, 0.08);
+}

@@ -1,0 +1,17 @@
+.favorites-section {
+  align-items: start;
+}
+
+.favorites-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.favorites-empty {
+  color: var(--color-text);
+  font-size: 1rem;
+}
+
+.favorites-section .pagination {
+  display: none;
+}

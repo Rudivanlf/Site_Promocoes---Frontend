@@ -1,23 +1,78 @@
 import { useEffect, useState } from "react";
-import { Settings, Home, BarChart2, Star } from "lucide-react";
 
 import { fetchProducts } from "./features/produtos/Produtos";
 import { getFavorites, addFavorite, removeFavorite, ApiError } from "./shared/utils/favoritesApi";
-import { LoginModal } from "./features/login/LoginModal";
 import { CadastroModal } from "./features/cadastro/CadastroModal";
+import { mapFavoriteProducts, extractFavoriteLinks } from "./features/favorites/favoritesUtils";
+import {
+  selectProductCategories,
+  selectProductsByCategory,
+  selectProductsPage,
+  selectProductsTotalPages,
+  selectSelectedProduct,
+} from "./features/products/productSelectors";
+import { normalizeSearchValue, isMercadoLivreLink, extractQueryFromMercadoLivreLink } from "./features/search/searchUtils";
+import { Navbar } from "./components/Navbar/Navbar";
+import { ArrowLeft } from "lucide-react";
+import { SearchBar } from "./components/SearchBar/SearchBar";
+import { Hero } from "./components/home/Hero/Hero";
+import { ProductGrid } from "./components/products/ProductGrid/ProductGrid";
+import { ProductsFilterSidebar } from "./components/filters/ProductsFilterSidebar";
+import { SideProduct } from "./components/products/SideProduct/SideProduct";
+import { AnalyticsSection } from "./components/analytics/AnalyticsSection/AnalyticsSection";
+import { FavoritesSection } from "./components/favorites/FavoritesSection/FavoritesSection";
+import OffersTopbar from "./components/OffersTopbar/OffersTopbar";
+import AppModal, { type TabId } from "./components/AppModal/AppModal";
+import "./components/OffersTopbar/OffersTopbar.css";
+import { AICalendarSection } from "./components/calendar/AICalendarSection";
+import type { Product } from "./types/product";
 
-import "./App.css";
-import { XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
+import "./features/login/AuthModals.css";
 
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  description: string;
-  sales: number;
-  image: string;
-  link?: string;
-  category: string;
+type Theme = "dark" | "light";
+type Page = "home" | "results" | "analytics" | "calendar" | "favorites";
+
+const THEME_STORAGE_KEY = "site-theme";
+const DEFAULT_RESULTS_QUERY = "celular";
+// STORE_OPTIONS removed — store filtering handled differently now
+const PAGE_PATHS: Record<Page, string> = {
+  home: "/",
+  results: "/produtos",
+  analytics: "/analytics",
+  calendar: "/calendario",
+  favorites: "/favoritos",
+};
+
+function getPageFromPath(pathname: string): Page {
+  const cleaned = pathname.replace(/\/+$/, "") || "/";
+
+  if (cleaned === "/produtos") return "results";
+  if (cleaned === "/analytics") return "analytics";
+  if (cleaned === "/calendario") return "calendar";
+  if (cleaned === "/favoritos") return "favorites";
+
+  return "home";
+}
+
+function extractStore(product: Product): string | null {
+  const text = `${product.name} ${product.link ?? ""} ${product.category}`.toLowerCase();
+
+  if (text.includes("amazon")) return "Amazon";
+  if (text.includes("magazineluiza") || text.includes("magazine luiza") || text.includes("magalu")) return "Magazine Luiza";
+  if (text.includes("casasbahia") || text.includes("casas bahia")) return "Casas Bahia";
+  if (text.includes("americanas")) return "Americanas";
+  if (text.includes("fastshop") || text.includes("fast shop")) return "Fast Shop";
+  if (text.includes("pontofrio") || text.includes("ponto frio")) return "Ponto Frio";
+
+  return null;
+}
+
+function extractRating(product: Product): number {
+  const ratingMatch = product.description.match(/avalia(?:cao|ção):\s*([\d.,]+)/i);
+  if (!ratingMatch) return 0;
+
+  const parsed = Number(ratingMatch[1].replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function App() {
@@ -27,17 +82,39 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todas");
   const [searchInput, setSearchInput] = useState("");
-  const [showLogin, setShowLogin] = useState(false);
+  
   const [showRegister, setShowRegister] = useState(false);
-  const [page, setPage] = useState<"home" | "analytics" | "favorites">("home");
+  const [page, setPage] = useState<Page>(() => getPageFromPath(window.location.pathname));
+  const [theme, setTheme] = useState<Theme>(() => {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    return savedTheme === "light" ? "light" : "dark";
+  });
   const [favorites, setFavorites] = useState<string[]>([]);
   const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [showLogout, setShowLogout] = useState(false);
+  
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 12;
-  const [linkInput, setLinkInput] = useState("");
-  const [showMenu, setShowMenu] = useState(false);
+  const [appModalOpen, setAppModalOpen] = useState(false);
+  const [appModalTab, setAppModalTab] = useState<TabId>("account");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  // selectedStores state removed
+  // minRating removed
+  const [isResultsScrolled, setIsResultsScrolled] = useState(false);
+  const [hasAttemptedResultsPrefill, setHasAttemptedResultsPrefill] = useState(false);
+
+  const maxAvailablePrice = Math.max(
+    10000,
+    Math.ceil((products.reduce((max, product) => Math.max(max, product.price || 0), 0) || 0) / 500) * 500
+  );
+
+  useEffect(() => {
+    setPriceRange((prev) => {
+      const nextMin = Math.min(prev[0], maxAvailablePrice);
+      const nextMax = Math.max(nextMin, Math.min(prev[1], maxAvailablePrice));
+      return [nextMin, nextMax];
+    });
+  }, [maxAvailablePrice]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("loggedUser");
@@ -45,17 +122,58 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      if (!target.closest('.logo-container')) {
-        setShowMenu(false);
-      }
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setPage(getPageFromPath(window.location.pathname));
     };
-    if (showMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (page !== "results") {
+      setIsResultsScrolled(false);
+      return;
     }
-    return () => { document.removeEventListener('mousedown', handleClickOutside); };
-  }, [showMenu]);
+
+    const handleScroll = () => {
+      setIsResultsScrolled(window.scrollY > 90);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [page]);
+
+  useEffect(() => {
+    if (page !== "results") {
+      setHasAttemptedResultsPrefill(false);
+      return;
+    }
+
+    if (products.length > 0 || loading || hasAttemptedResultsPrefill) {
+      return;
+    }
+
+    setHasAttemptedResultsPrefill(true);
+    void handleSearch(searchInput || DEFAULT_RESULTS_QUERY, { navigateOnSuccess: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, products.length, loading, hasAttemptedResultsPrefill]);
+
+  function navigateTo(nextPage: Page) {
+    const nextPath = PAGE_PATHS[nextPage];
+
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({}, "", nextPath);
+    }
+
+    setPage(nextPage);
+  }
 
   // Load/clear favorites whenever the logged-in user changes
   useEffect(() => {
@@ -68,37 +186,11 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userEmail]);
 
-  useEffect(() => {
-    async function loadInitialProducts() {
-      try {
-        const data = await fetchProducts("celular");
-        if (data && data.length > 0) {
-          const sorted = data.sort((a: Product, b: Product) => b.sales - a.sales).slice(0, 8);
-          setProducts(sorted);
-        }
-      } catch (err) {
-        console.error("Erro ao carregar produtos iniciais", err);
-      }
-    }
-    loadInitialProducts();
-  }, []);
-
   async function loadFavorites() {
     try {
       const data = await getFavorites();
-      setFavorites(data.map(f => f.link));
-      setFavoriteProducts(
-        data.map(f => ({
-          id: f.id ?? 0,
-          name: f.name,
-          price: f.price,
-          description: f.description ?? "",
-          sales: f.sales ?? 0,
-          image: f.image ?? "",
-          link: f.link,
-          category: f.category ?? "",
-        }))
-      );
+      setFavorites(extractFavoriteLinks(data));
+      setFavoriteProducts(mapFavoriteProducts(data));
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         handleLogout();
@@ -110,7 +202,6 @@ function App() {
     localStorage.removeItem("loggedUser");
     localStorage.removeItem("authToken");
     setUserEmail(null);
-    setShowLogout(false);
     setFavorites([]);
     setFavoriteProducts([]);
   }
@@ -119,7 +210,8 @@ function App() {
     if (!product.link) return;
 
     if (!userEmail) {
-      setShowLogin(true);
+      setAppModalTab('account');
+      setAppModalOpen(true);
       return;
     }
 
@@ -175,16 +267,25 @@ function App() {
     }
   }
 
-  async function handleSearch(query: string) {
-    if (!query) return;
+  async function handleSearch(
+    query: string,
+    options?: { navigateOnSuccess?: boolean }
+  ) {
+    const cleanedQuery = normalizeSearchValue(query) || DEFAULT_RESULTS_QUERY;
+
     setLoading(true);
     setError(null);
     setCurrentPage(1);
+    setSelectedId(null);
+    setSearchInput(cleanedQuery);
 
     try {
-      const data = await fetchProducts(query);
+      const data = await fetchProducts(cleanedQuery);
       if (data && data.length > 0) {
         setProducts(data);
+        if (options?.navigateOnSuccess ?? true) {
+          navigateTo("results");
+        }
       } else {
         setProducts([]);
         setError("Nenhum produto encontrado");
@@ -200,17 +301,17 @@ function App() {
   async function handleSearchByLink(link: string) {
     setLoading(true);
     setError(null);
-    try {
-      const url = new URL(link);
-      let slug = "";
-      if (url.pathname.includes("/p/")) {
-        slug = url.pathname.split("/p/")[0].split("/").pop() || "";
-      } else {
-        slug = url.pathname.split("/").pop() || "";
-      }
-      const query = slug.replace(/MLB\d+/i, "").replace(/-/g, " ").trim();
+    setSelectedId(null);
 
-      if (!query) return;
+    try {
+      const query = extractQueryFromMercadoLivreLink(link);
+
+      if (!query) {
+        setError("Link inválido ou erro ao buscar");
+        return;
+      }
+
+      setSearchInput(query);
 
       const data = await fetchProducts(query);
       if (data && data.length > 0) {
@@ -218,6 +319,10 @@ function App() {
         const product = productMatch ? productMatch : { ...data[0], link: link };
         setProducts([product]);
         setSelectedId(product.link ?? null);
+        navigateTo("results");
+      } else {
+        setProducts([]);
+        setError("Nenhum produto encontrado");
       }
     } catch (err) {
       setError("Link inválido ou erro ao buscar");
@@ -226,301 +331,225 @@ function App() {
     }
   }
 
-  const categories = ["Todas", ...Array.from(new Set(products.map(p => p.category)))];
-  const filteredProducts = selectedCategory === "Todas" ? products : products.filter(p => p.category === selectedCategory);
+  const handleUnifiedSearch = (value: string) => {
+    const cleanedValue = normalizeSearchValue(value);
 
-  const CustomTooltip = (props?: any | null) => {
-    const { active, payload } = props ?? {};
-    if (active && payload && payload.length) {
-      const first = payload[0] as { payload?: unknown } | undefined;
-      const data = first?.payload as { name?: string; price?: number | string; sales?: number } | undefined;
-      return (
-        <div className="chart-tooltip">
-          <span className="chart-tooltip-name">{data?.name}</span>
-          <span className="chart-tooltip-price">
-            R$ {typeof data?.price === "number" ? data.price.toFixed(2) : data?.price}
-          </span>
-          {data?.sales !== undefined && (
-            <span className="chart-tooltip-sales">{data.sales} vendas</span>
-          )}
-        </div>
-      );
+    if (!cleanedValue) {
+      void handleSearch(DEFAULT_RESULTS_QUERY, { navigateOnSuccess: true });
+      return;
     }
-    return null;
+
+    if (isMercadoLivreLink(cleanedValue)) {
+      handleSearchByLink(cleanedValue);
+      return;
+    }
+
+    handleSearch(cleanedValue);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleBarClick = (data: any) => {
-    const link = data?.link as string | undefined;
+  const categories = selectProductCategories(products);
+  const filteredProducts = selectProductsByCategory(products, selectedCategory);
+
+  const filteredHomeProducts = products.filter((product) => {
+    const numericPrice = Number(product.price) || 0;
+    const store = extractStore(product);
+    const rating = extractRating(product);
+
+    const byPrice = numericPrice >= priceRange[0] && numericPrice <= priceRange[1];
+    const byStore = true;
+    const byRating = true;
+
+    return byPrice && byStore && byRating;
+  });
+
+  const handleBarClick = (data: unknown) => {
+    const payload = data as { link?: string } | null;
+    const link = payload?.link;
     if (link) {
       setSelectedId(prev => prev === link ? null : link);
     }
   };
 
-  const indexOfLast = currentPage * productsPerPage;
-  const indexOfFirst = indexOfLast - productsPerPage;
-  const currentProducts = products.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(products.length / productsPerPage);
+  const currentProducts = selectProductsPage(filteredHomeProducts, currentPage, productsPerPage);
+  const totalPages = selectProductsTotalPages(filteredHomeProducts, productsPerPage);
 
   // === PRODUTO SELECIONADO PARA O PAINEL LATERAL ===
-  const selectedProduct = favoriteProducts.find((p) => p.link === selectedId) || products.find((p) => p.link === selectedId);
+  const selectedProduct = selectSelectedProduct(products, favoriteProducts, selectedId);
 
   return (
     <div className="container">
-      <div className="navbar">
-        <div className="logo-container">
-          <div className="logo-circle" onClick={() => setShowMenu(!showMenu)}>
-            <Settings className="w-6 h-6" style={{ color: "#22c55e" }} />
-          </div>
-          {showMenu && (
-            <div className="dropdown-menu show">
-              <button onClick={() => { setPage("home"); setShowMenu(false); }} className="menu-item" data-tooltip="Home"><Home className="w-5 h-5" /></button>
-              <button onClick={() => { setPage("analytics"); setShowMenu(false); }} className="menu-item" data-tooltip="Analytics"><BarChart2 className="w-5 h-5" /></button>
-              <button onClick={() => { setPage("favorites"); setShowMenu(false); }} className="menu-item" data-tooltip="Favoritos"><Star className="w-5 h-5" /></button>
-            </div>
-          )}
-        </div>
-        <button className="login-top-button" onClick={() => userEmail ? setShowLogout(true) : setShowLogin(true)}>
-          {userEmail ? userEmail.charAt(0).toUpperCase() : "Fazer Login"}
-        </button>
-      </div>
+      <Navbar
+        hidden={page === "results"}
+        loginOnly={page === "results"}
+        hideLoginButton={page === "results"}
+        onToggleTheme={() => {
+          setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+        }}
+        onLoginButtonClick={() => {
+          setAppModalTab(userEmail ? "favorites" : "account");
+          setAppModalOpen(true);
+        }}
+        userEmail={userEmail}
+      />
 
-      {showLogin && (
-        <LoginModal
-          onClose={() => setShowLogin(false)}
-          onOpenRegister={() => { setShowLogin(false); setShowRegister(true); }}
-          onLoginSuccess={(email: string) => setUserEmail(email)}
-        />
-      )}
+      <AppModal
+        isOpen={appModalOpen}
+        onClose={() => setAppModalOpen(false)}
+        userEmail={userEmail}
+        onLoginSuccess={(email: string) => {
+          setUserEmail(email);
+          // do not close modal here; AppModal will switch to favorites
+        }}
+        onLogout={() => {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('loggedUser');
+          setUserEmail(null);
+        }}
+        initialTab={appModalTab}
+        favoriteProducts={favoriteProducts}
+        onToggleFavorite={toggleFavorite}
+      />
       {showRegister && (
         <CadastroModal
           onClose={() => setShowRegister(false)}
-          onOpenLogin={() => { setShowRegister(false); setShowLogin(true); }}
+          onOpenLogin={() => { setShowRegister(false); setAppModalTab('account'); setAppModalOpen(true); }}
           onLoginSuccess={(email: string) => { setUserEmail(email); setShowRegister(false); }}
         />
       )}
-      {showLogout && (
-        <div className="login-overlay" onClick={() => setShowLogout(false)}>
-          <div className="login-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Deseja sair?</h2>
-            <div className="login-buttons">
-              <button onClick={handleLogout}>Sair</button>
-              <button onClick={() => setShowLogout(false)}>Cancelar</button>
-            </div>
+      
+
+      {page === "home" && (
+        <div className="home-layout">
+          <div className="home-left">
+            <Hero />
+
+            <SearchBar
+              value={searchInput}
+              loading={loading}
+              error={error}
+              onChange={setSearchInput}
+              onSubmit={() => handleUnifiedSearch(searchInput)}
+            />
           </div>
         </div>
       )}
 
-      {page === "home" && (
-        <div className={`home-layout ${selectedProduct ? "active" : ""}`}>
-          <div className="home-left">
-            <h1 className="main-title">
-              <span className="h1-part-dark">Pesquise um </span>
-              <span className="h1-part-green">produto</span>
-              <span className="h1-part-dark"> e veja </span>
-              <span className="h1-part-green">ofertas</span>
-              <span className="h1-part-dark"> com </span>
-              <span className="h1-part-green">Project Promo IA</span>
-            </h1>
+      {page === "results" && (
+        <div className={`products-page ${selectedProduct ? "active" : ""}`}>
+          <OffersTopbar
+            title={searchInput.trim() || DEFAULT_RESULTS_QUERY}
+            totalProducts={filteredHomeProducts.length}
+            onBack={() => navigateTo("home")}
+            onLogin={() => {
+              setAppModalTab(userEmail ? "favorites" : "account");
+              setAppModalOpen(true);
+            }}
+            searchValue={searchInput}
+            searchLoading={loading}
+            searchError={error}
+            onSearchChange={(v) => setSearchInput(v)}
+            onSearchSubmit={() => handleUnifiedSearch(searchInput)}
+          />
 
-            <form onSubmit={(e) => { e.preventDefault(); handleSearch(searchInput); }}>
-              <input
-                className="search-input"
-                type="text"
-                placeholder="Buscar no Mercado Livre..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-              />
-              <button className="search-button" type="submit" disabled={loading}>
-                {loading ? "Buscando..." : "Buscar"}
-              </button>
-            </form>
-
-            <div className="link-search-container">
-              <input
-                className="search-input"
-                type="text"
-                placeholder="Colar link do Mercado Livre..."
-                value={linkInput}
-                onChange={(e) => setLinkInput(e.target.value)}
-              />
-              <button className="search-button" onClick={() => handleSearchByLink(linkInput)}>
-                Buscar
-              </button>
-            </div>
-
-            {error && <p className="search-error">{error}</p>}
-
-            <div className="home-products">
-              {currentProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="home-card"
-                  onClick={() => setSelectedId(product.link ?? null)}
-                >
-                  <img src={product.image} alt={product.name} />
-                  <h3>{product.name}</h3>
-                  <p className="price">R$ {product.price}</p>
-                  <p className="sales">{product.sales} vendas</p>
+          <main className={`products-page__content home-layout ${selectedProduct ? "active" : ""}`}>
+            <div className="home-main">
+              {loading && products.length === 0 ? (
+                <div className="resultsLoadingState" role="status" aria-live="polite">
+                  <p className="resultsLoadingTitle">Carregando ofertas...</p>
+                  <p className="resultsLoadingSubtitle">Buscando produtos para: {searchInput || DEFAULT_RESULTS_QUERY}</p>
                 </div>
-              ))}
-            </div>
+              ) : (
+                <>
+                  {isResultsScrolled && (
+                    <div className="resultsCompactBar">
+                      <button
+                        type="button"
+                        className="resultsBackButton"
+                        onClick={() => navigateTo("home")}
+                        aria-label="Voltar para Home"
+                      >
+                        <ArrowLeft size={18} />
+                      </button>
+                      <div className="resultsCompactInfo">
+                        <p className="resultsCompactTitle">
+                          Ofertas para: <span>{searchInput.trim() || DEFAULT_RESULTS_QUERY}</span>
+                        </p>
+                        <p className="resultsCompactCount">{filteredHomeProducts.length} produtos encontrados</p>
+                      </div>
+                    </div>
+                  )}
 
-            <div className="pagination">
-              {Array.from({ length: totalPages }, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={currentPage === i + 1 ? "active-page" : ""}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-          </div>
+                  {/* search moved to fixed header - removed duplicate search bar here */}
 
-          {selectedProduct && (
-            <div className="side-product">
-              <div className="side-product-header">
-                <button className="buy-button" onClick={() => toggleFavorite(selectedProduct)}>
-                  {favorites.includes(selectedProduct.link ?? "") ? "Desfavoritar" : "Favoritar"}
-                </button>
-                <button className="close-button" onClick={() => setSelectedId(null)}>✕</button>
-              </div>
-              <div className="image-container" onClick={() => toggleFavorite(selectedProduct)}>
-                <img src={selectedProduct.image} alt={selectedProduct.name} className="product-image" />
-                <div className="favorite-star">
-                  {favorites.includes(selectedProduct.link ?? "") ? "⭐" : "☆"}
-                </div>
-              </div>
-              <h2>{selectedProduct.name}</h2>
-              {selectedProduct.link && (
-                <p><a href={selectedProduct.link} target="_blank" rel="noreferrer">Ver no Mercado Livre</a></p>
+                  <div className="productsPageLayout">
+                    <ProductsFilterSidebar
+                      minPrice={0}
+                      maxPrice={maxAvailablePrice}
+                      priceRange={priceRange}
+                      onMinPriceChange={(value) => {
+                        setPriceRange((prev) => [Math.min(value, prev[1]), prev[1]]);
+                        setCurrentPage(1);
+                      }}
+                      onMaxPriceChange={(value) => {
+                        setPriceRange((prev) => [prev[0], Math.max(value, prev[0])]);
+                        setCurrentPage(1);
+                      }}
+                    />
+
+                    <div className="productsContentArea">
+                      <ProductGrid
+                        products={currentProducts}
+                        totalPages={totalPages}
+                        currentPage={currentPage}
+                        onPageChange={setCurrentPage}
+                        onSelectProduct={setSelectedId}
+                        favorites={favorites}
+                        onToggleFavorite={toggleFavorite}
+                      />
+                    </div>
+                  </div>
+                </>
               )}
-              <p><strong>Preço:</strong> R$ {selectedProduct.price}</p>
-              <p>{selectedProduct.description}</p>
-              <p><strong>Vendas:</strong> {selectedProduct.sales}</p>
             </div>
-          )}
+
+            {selectedProduct && (
+              <SideProduct
+                product={selectedProduct}
+                favorites={favorites}
+                onToggleFavorite={toggleFavorite}
+                onClose={() => setSelectedId(null)}
+              />
+            )}
+          </main>
         </div>
       )}
 
       {page === "analytics" && (
-        <div className="analytics-layout">
-          {selectedProduct && (
-            <div className="side-product">
-              <div className="side-product-header">
-                <button className="buy-button" onClick={() => toggleFavorite(selectedProduct)}>
-                  {favorites.includes(selectedProduct.link ?? "") ? "Desfavoritar" : "Favoritar"}
-                </button>
-                <button className="close-button" onClick={() => setSelectedId(null)}>✕</button>
-              </div>
-              <div className="image-container" onClick={() => toggleFavorite(selectedProduct)}>
-                <img src={selectedProduct.image} alt={selectedProduct.name} className="product-image" />
-                <div className="favorite-star">
-                  {favorites.includes(selectedProduct.link ?? "") ? "⭐" : "☆"}
-                </div>
-              </div>
-              <h2>{selectedProduct.name}</h2>
-              {selectedProduct.link && (
-                <p><a href={selectedProduct.link} target="_blank" rel="noreferrer">Ver no Mercado Livre</a></p>
-              )}
-              <p><strong>Preço:</strong> R$ {selectedProduct.price}</p>
-              <p>{selectedProduct.description}</p>
-              <p><strong>Vendas:</strong> {selectedProduct.sales}</p>
-            </div>
-          )}
-
-          <div className="chart-column">
-            <div className="chart">
-              <div className="chart-header">
-                <h3 className="chart-title">Análise de Preços</h3>
-                <p className={`chart-hint${selectedId ? " has-selection" : ""}`}>
-                  {selectedId
-                    ? "✓ Produto selecionado — clique novamente para deselecionar"
-                    : "Clique em uma barra para ver o produto"}
-                </p>
-              </div>
-              <ResponsiveContainer width="100%" height={380}>
-                <BarChart data={filteredProducts}>
-                  <CartesianGrid stroke="#1f2937" strokeDasharray="3 3" />
-                  <XAxis dataKey="name" stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-                  <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-                  <Tooltip content={CustomTooltip} />
-                  <Bar
-                    dataKey="price"
-                    radius={[6, 6, 0, 0]}
-                    cursor="pointer"
-                    onClick={handleBarClick}
-                    activeBar={{ fill: "#fbbf24", stroke: "#f97316", strokeWidth: 2 }}
-                  >
-                    {filteredProducts.map((product) => (
-                      <Cell
-                        key={product.id}
-                        fill={product.link === selectedId ? "#f97316" : "#22c55e"}
-                        style={{ cursor: "pointer" }}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="categories">
-              <h3>Categorias</h3>
-              {categories.map((category) => (
-                <div key={category} className="category-item" onClick={() => setSelectedCategory(category)}>
-                  <div className={`category-circle ${selectedCategory === category ? "active" : ""}`}></div>
-                  <span>{category}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <AnalyticsSection
+          products={filteredProducts}
+          categories={categories}
+          selectedProduct={selectedProduct}
+          selectedId={selectedId}
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
+          onBarClick={handleBarClick}
+          onToggleFavorite={toggleFavorite}
+          favorites={favorites}
+          onCloseSideProduct={() => setSelectedId(null)}
+        />
       )}
 
-      {page === "favorites" && (
-        <div className="analytics-layout">
-          {selectedProduct && (
-            <div className="side-product">
-              <div className="side-product-header">
-                <button className="buy-button" onClick={() => toggleFavorite(selectedProduct)}>
-                  {favorites.includes(selectedProduct.link ?? "") ? "Desfavoritar" : "Favoritar"}
-                </button>
-                <button className="close-button" onClick={() => setSelectedId(null)}>✕</button>
-              </div>
-              <div className="image-container" onClick={() => toggleFavorite(selectedProduct)}>
-                <img src={selectedProduct.image} alt={selectedProduct.name} className="product-image" />
-                <div className="favorite-star">
-                  {favorites.includes(selectedProduct.link ?? "") ? "⭐" : "☆"}
-                </div>
-              </div>
-              <h2>{selectedProduct.name}</h2>
-              {selectedProduct.link && (
-                <p><a href={selectedProduct.link} target="_blank" rel="noreferrer">Ver no Mercado Livre</a></p>
-              )}
-              <p><strong>Preço:</strong> R$ {selectedProduct.price}</p>
-              <p>{selectedProduct.description}</p>
-              <p><strong>Vendas:</strong> {selectedProduct.sales}</p>
-            </div>
-          )}
+      {page === "calendar" && <AICalendarSection />}
 
-          <div className="home-products">
-            {favorites.length === 0 && <p>Nenhum produto favoritado ainda</p>}
-            {favoriteProducts.map((product) => (
-              <div
-                key={product.id}
-                className="home-card"
-                onClick={() => setSelectedId(product.link ?? null)}
-              >
-                <img src={product.image} alt={product.name} />
-                <h3>{product.name}</h3>
-                <p className="price">R$ {product.price}</p>
-                <p className="sales">{product.sales} vendas</p>
-              </div>
-            ))}
-          </div>
-        </div>
+      {page === "favorites" && (
+        <FavoritesSection
+          favoriteProducts={favoriteProducts}
+          favorites={favorites}
+          selectedProduct={selectedProduct}
+          onSelectProduct={setSelectedId}
+          onToggleFavorite={toggleFavorite}
+          onCloseSideProduct={() => setSelectedId(null)}
+        />
       )}
     </div>
   );
