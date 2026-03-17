@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Settings, Home, BarChart2, Star, ArrowLeft, X } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { fetchProducts } from "./features/produtos/Produtos";
 import { getFavorites, addFavorite, removeFavorite, ApiError } from "./shared/utils/favoritesApi";
@@ -44,32 +44,27 @@ const PAGE_PATHS: Record<Page, string> = {
 
 function getPageFromPath(pathname: string): Page {
   const cleaned = pathname.replace(/\/+$/, "") || "/";
-
   if (cleaned === "/produtos") return "results";
   if (cleaned === "/analytics") return "analytics";
   if (cleaned === "/calendario") return "calendar";
   if (cleaned === "/favoritos") return "favorites";
-
   return "home";
 }
 
 function extractStore(product: Product): string | null {
   const text = `${product.name} ${product.link ?? ""} ${product.category}`.toLowerCase();
-
   if (text.includes("amazon")) return "Amazon";
   if (text.includes("magazineluiza") || text.includes("magazine luiza") || text.includes("magalu")) return "Magazine Luiza";
   if (text.includes("casasbahia") || text.includes("casas bahia")) return "Casas Bahia";
   if (text.includes("americanas")) return "Americanas";
   if (text.includes("fastshop") || text.includes("fast shop")) return "Fast Shop";
   if (text.includes("pontofrio") || text.includes("ponto frio")) return "Ponto Frio";
-
   return null;
 }
 
 function extractRating(product: Product): number {
   const ratingMatch = product.description.match(/avalia(?:cao|ção):\s*([\d.,]+)/i);
   if (!ratingMatch) return 0;
-
   const parsed = Number(ratingMatch[1].replace(",", "."));
   return Number.isFinite(parsed) ? parsed : 0;
 }
@@ -81,7 +76,6 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todas");
   const [searchInput, setSearchInput] = useState("");
-
   const [showRegister, setShowRegister] = useState(false);
   const [page, setPage] = useState<Page>(() => getPageFromPath(window.location.pathname));
   const [theme, setTheme] = useState<Theme>(() => {
@@ -91,7 +85,6 @@ function App() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 12;
   const [appModalOpen, setAppModalOpen] = useState(false);
@@ -99,7 +92,6 @@ function App() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [isResultsScrolled, setIsResultsScrolled] = useState(false);
   const [hasAttemptedResultsPrefill, setHasAttemptedResultsPrefill] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
 
   const maxAvailablePrice = Math.max(
     10000,
@@ -125,10 +117,7 @@ function App() {
   }, [theme]);
 
   useEffect(() => {
-    const handlePopState = () => {
-      setPage(getPageFromPath(window.location.pathname));
-    };
-
+    const handlePopState = () => setPage(getPageFromPath(window.location.pathname));
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
@@ -138,11 +127,7 @@ function App() {
       setIsResultsScrolled(false);
       return;
     }
-
-    const handleScroll = () => {
-      setIsResultsScrolled(window.scrollY > 90);
-    };
-
+    const handleScroll = () => setIsResultsScrolled(window.scrollY > 90);
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
@@ -153,11 +138,7 @@ function App() {
       setHasAttemptedResultsPrefill(false);
       return;
     }
-
-    if (products.length > 0 || loading || hasAttemptedResultsPrefill) {
-      return;
-    }
-
+    if (products.length > 0 || loading || hasAttemptedResultsPrefill) return;
     setHasAttemptedResultsPrefill(true);
     void handleSearch(searchInput || DEFAULT_RESULTS_QUERY, { navigateOnSuccess: true });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -165,11 +146,9 @@ function App() {
 
   function navigateTo(nextPage: Page) {
     const nextPath = PAGE_PATHS[nextPage];
-
     if (window.location.pathname !== nextPath) {
       window.history.pushState({}, "", nextPath);
     }
-
     setPage(nextPage);
   }
 
@@ -180,6 +159,7 @@ function App() {
       setFavorites([]);
       setFavoriteProducts([]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userEmail]);
 
   async function loadFavorites() {
@@ -188,9 +168,7 @@ function App() {
       setFavorites(extractFavoriteLinks(data));
       setFavoriteProducts(mapFavoriteProducts(data));
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        handleLogout();
-      }
+      if (err instanceof ApiError && err.status === 401) handleLogout();
     }
   }
 
@@ -205,7 +183,7 @@ function App() {
   async function toggleFavorite(product: Product) {
     if (!product.link) return;
     if (!userEmail) {
-      setAppModalTab('account');
+      setAppModalTab("account");
       setAppModalOpen(true);
       return;
     }
@@ -213,6 +191,7 @@ function App() {
     const isCurrentlyFavorite = favorites.includes(product.link);
 
     if (isCurrentlyFavorite) {
+      // Optimistic remove
       setFavorites(prev => prev.filter(l => l !== product.link));
       setFavoriteProducts(prev => prev.filter(p => p.link !== product.link));
       try {
@@ -220,14 +199,18 @@ function App() {
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
           handleLogout();
+        } else if (err instanceof ApiError && err.status === 404) {
+          // Already removed on backend — state already correct
         } else {
+          // Revert on unexpected error
           setFavorites(prev => [...prev, product.link!]);
           setFavoriteProducts(prev => [...prev, product]);
         }
       }
     } else {
-      setFavorites(prev => prev.includes(product.link!) ? prev : [...prev, product.link!]);
-      setFavoriteProducts(prev => prev.some(p => p.link === product.link) ? prev : [...prev, product]);
+      // Optimistic add
+      setFavorites(prev => [...prev, product.link!]);
+      setFavoriteProducts(prev => [...prev, product]);
       try {
         await addFavorite({
           link: product.link,
@@ -244,30 +227,29 @@ function App() {
           handleLogout();
           setFavorites(prev => prev.filter(l => l !== product.link));
           setFavoriteProducts(prev => prev.filter(p => p.link !== product.link));
+        } else if (err instanceof ApiError && err.status === 400) {
+          // Already a favorite on backend — optimistic state is correct
+        } else {
+          // Revert on unexpected error
+          setFavorites(prev => prev.filter(l => l !== product.link));
+          setFavoriteProducts(prev => prev.filter(p => p.link !== product.link));
         }
       }
     }
   }
 
-  async function handleSearch(
-    query: string,
-    options?: { navigateOnSuccess?: boolean }
-  ) {
+  async function handleSearch(query: string, options?: { navigateOnSuccess?: boolean }) {
     const cleanedQuery = normalizeSearchValue(query) || DEFAULT_RESULTS_QUERY;
-
     setLoading(true);
     setError(null);
     setCurrentPage(1);
     setSelectedId(null);
     setSearchInput(cleanedQuery);
-
     try {
       const data = await fetchProducts(cleanedQuery);
       if (data && data.length > 0) {
         setProducts(data);
-        if (options?.navigateOnSuccess ?? true) {
-          navigateTo("results");
-        }
+        if (options?.navigateOnSuccess ?? true) navigateTo("results");
       } else {
         setProducts([]);
         setError("Nenhum produto encontrado");
@@ -278,24 +260,19 @@ function App() {
     } finally {
       setLoading(false);
     }
-    setHasSearched(true);
   }
 
   async function handleSearchByLink(link: string) {
     setLoading(true);
     setError(null);
     setSelectedId(null);
-
     try {
       const query = extractQueryFromMercadoLivreLink(link);
-
       if (!query) {
         setError("Link inválido ou erro ao buscar");
         return;
       }
-
       setSearchInput(query);
-
       const data = await fetchProducts(query);
       if (data && data.length > 0) {
         const productMatch = data.find(p => p.link === link);
@@ -312,22 +289,18 @@ function App() {
     } finally {
       setLoading(false);
     }
-    setHasSearched(true);
   }
 
   const handleUnifiedSearch = (value: string) => {
     const cleanedValue = normalizeSearchValue(value);
-
     if (!cleanedValue) {
       void handleSearch(DEFAULT_RESULTS_QUERY, { navigateOnSuccess: true });
       return;
     }
-
     if (isMercadoLivreLink(cleanedValue)) {
       handleSearchByLink(cleanedValue);
       return;
     }
-
     handleSearch(cleanedValue);
   };
 
@@ -336,21 +309,17 @@ function App() {
 
   const filteredHomeProducts = products.filter((product) => {
     const numericPrice = Number(product.price) || 0;
-    const byPrice = numericPrice >= priceRange[0] && numericPrice <= priceRange[1];
-    return byPrice;
+    return numericPrice >= priceRange[0] && numericPrice <= priceRange[1];
   });
 
   const handleBarClick = (data: unknown) => {
     const payload = data as { link?: string } | null;
     const link = payload?.link;
-    if (link) {
-      setSelectedId(prev => prev === link ? null : link);
-    }
+    if (link) setSelectedId(prev => prev === link ? null : link);
   };
 
   const currentProducts = selectProductsPage(filteredHomeProducts, currentPage, productsPerPage);
   const totalPages = selectProductsTotalPages(filteredHomeProducts, productsPerPage);
-
   const selectedProduct = selectSelectedProduct(products, favoriteProducts, selectedId);
 
   return (
@@ -359,9 +328,7 @@ function App() {
         hidden={page === "results"}
         loginOnly={page === "results"}
         hideLoginButton={page === "results"}
-        onToggleTheme={() => {
-          setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-        }}
+        onToggleTheme={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
         onLoginButtonClick={() => {
           setAppModalTab(userEmail ? "favorites" : "account");
           setAppModalOpen(true);
@@ -373,12 +340,10 @@ function App() {
         isOpen={appModalOpen}
         onClose={() => setAppModalOpen(false)}
         userEmail={userEmail}
-        onLoginSuccess={(email: string) => {
-          setUserEmail(email);
-        }}
+        onLoginSuccess={(email: string) => setUserEmail(email)}
         onLogout={() => {
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('loggedUser');
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("loggedUser");
           setUserEmail(null);
         }}
         initialTab={appModalTab}
@@ -389,7 +354,7 @@ function App() {
       {showRegister && (
         <CadastroModal
           onClose={() => setShowRegister(false)}
-          onOpenLogin={() => { setShowRegister(false); setAppModalTab('account'); setAppModalOpen(true); }}
+          onOpenLogin={() => { setShowRegister(false); setAppModalTab("account"); setAppModalOpen(true); }}
           onLoginSuccess={(email: string) => { setUserEmail(email); setShowRegister(false); }}
         />
       )}
@@ -398,7 +363,6 @@ function App() {
         <div className="home-layout">
           <div className="home-left">
             <Hero />
-
             <SearchBar
               value={searchInput}
               loading={loading}
@@ -469,7 +433,6 @@ function App() {
                         setCurrentPage(1);
                       }}
                     />
-
                     <div className="productsContentArea">
                       <ProductGrid
                         products={currentProducts}
