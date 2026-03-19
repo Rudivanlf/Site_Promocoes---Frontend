@@ -1,6 +1,6 @@
 import { ProductCard } from "../ProductCard/ProductCard";
 import type { Product } from "../../../types/product";
-import { getBestDealProductId, getCardBadgeLabel, getProductPricing } from "../../../features/products/productPricing";
+import { getProductPricing } from "../../../features/products/productPricing";
 
 import "./ProductGrid.css";
 
@@ -23,15 +23,13 @@ export function ProductGrid({
   favorites = [],
   onToggleFavorite,
 }: ProductGridProps) {
-  const bestDealProductId = getBestDealProductId(products);
-  const lowestPrice = products.reduce((min, product) => Math.min(min, product.price || 0), Number.POSITIVE_INFINITY);
+  
 
   return (
     <>
       <div className="home-products">
         {products.map((product) => {
           const pricing = getProductPricing(product);
-          const badgeLabel = getCardBadgeLabel(product, pricing, bestDealProductId, lowestPrice);
 
           return (
             <ProductCard
