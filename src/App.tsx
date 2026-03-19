@@ -27,7 +27,7 @@ import "./components/OffersTopbar/OffersTopbar.css";
 import { AICalendarSection } from "./components/calendar/AICalendarSection";
 import type { Product } from "./types/product";
 import "./features/login/AuthModals.css";
-import "./App.css";
+import "./app.css";
 
 type Theme = "dark" | "light";
 type Page = "home" | "results" | "analytics" | "calendar" | "favorites";
