@@ -1,6 +1,5 @@
 import { ArrowLeft, Menu } from "lucide-react";
 import { SearchBar } from "../SearchBar/SearchBar";
-import navStyles from "../Navbar/Navbar.module.css";
 import "../Navbar/Navbar.module.css";
 
 type OffersTopbarProps = {
@@ -23,8 +22,8 @@ export default function OffersTopbar({
   searchValue = "",
   searchLoading = false,
   searchError = null,
-  onSearchChange,
-  onSearchSubmit,
+  onSearchChange = () => {},
+  onSearchSubmit = () => {},
 }: OffersTopbarProps) {
   return (
     <header className="products-fixed-header" role="banner">

@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
-import { X, User, Heart, CalendarDays, BarChart3, Settings, ExternalLink, Trash2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { X, User, Heart, CalendarDays, BarChart3, Settings, ExternalLink } from "lucide-react";
 import type { Product } from "../../types/product";
 import { loginUser, registerUser } from "../../shared/utils/authApi";
 import { GoogleLoginButton } from "../../features/login/GoogleLoginButton";
-import { AnimatePresence, motion, useSpring, useTransform } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { formatCurrency } from "../../features/products/productPricing";
 import "./AppModal.css";
 import { ShoppingCalendar } from "./ShoppingCalendar";

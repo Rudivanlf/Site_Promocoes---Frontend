@@ -243,9 +243,9 @@ export function ShoppingCalendar() {
         {/* Painel de detalhes */}
         <div style={{ width: "220px", flexShrink: 0, display: "flex", flexDirection: "column", gap: "0.5rem", overflowY: "auto" }}>
           {selectedEvent ? (
-            <EventDetail event={selectedEvent} onClose={() => setSelectedEvent(null)} allEvents={EVENTS.filter(e => e.date === selectedEvent.date)} />
+            <EventDetail onClose={() => setSelectedEvent(null)} allEvents={EVENTS.filter(e => e.date === selectedEvent.date)} />
           ) : (
-            <UpcomingEvents events={EVENTS} currentDate={currentDate} onSelect={setSelectedEvent} />
+            <UpcomingEvents events={EVENTS} onSelect={setSelectedEvent} />
           )}
         </div>
       </div>
@@ -253,10 +253,7 @@ export function ShoppingCalendar() {
   );
 }
 
-function EventDetail({ event, onClose, allEvents }: { event: CalendarEvent; onClose: () => void; allEvents: CalendarEvent[] }) {
-  const cfg = TYPE_CONFIG[event.type];
-  const Icon = cfg.icon;
-
+function EventDetail({ onClose, allEvents }: { onClose: () => void; allEvents: CalendarEvent[] }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -287,7 +284,7 @@ function EventDetail({ event, onClose, allEvents }: { event: CalendarEvent; onCl
   );
 }
 
-function UpcomingEvents({ events, currentDate, onSelect }: { events: CalendarEvent[]; currentDate: Date; onSelect: (e: CalendarEvent) => void }) {
+function UpcomingEvents({ events, onSelect }: { events: CalendarEvent[]; onSelect: (e: CalendarEvent) => void }) {
   const today = new Date();
   const upcoming = events
     .filter(e => new Date(e.date) >= today)
