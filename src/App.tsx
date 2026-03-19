@@ -51,7 +51,7 @@ function getPageFromPath(pathname: string): Page {
   return "home";
 }
 
-function extractStore(product: Product): string | null {
+export function extractStore(product: Product): string | null {
   const text = `${product.name} ${product.link ?? ""} ${product.category}`.toLowerCase();
   if (text.includes("amazon")) return "Amazon";
   if (text.includes("magazineluiza") || text.includes("magazine luiza") || text.includes("magalu")) return "Magazine Luiza";
@@ -62,7 +62,7 @@ function extractStore(product: Product): string | null {
   return null;
 }
 
-function extractRating(product: Product): number {
+export function extractRating(product: Product): number {
   const ratingMatch = product.description.match(/avalia(?:cao|ção):\s*([\d.,]+)/i);
   if (!ratingMatch) return 0;
   const parsed = Number(ratingMatch[1].replace(",", "."));
