@@ -37,9 +37,6 @@ export function SideProduct({ product, favorites, onToggleFavorite, onClose }: S
           <strong>Preço:</strong> R$ {product.price}
         </p>
         <p>{product.description}</p>
-        <p>
-          <strong>Vendas:</strong> {product.sales}
-        </p>
       </div>
     </div>
   );

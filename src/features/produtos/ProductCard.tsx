@@ -1,4 +1,4 @@
-import { Heart, ExternalLink, ShoppingCart, Star } from "lucide-react";
+import { Heart, ExternalLink, ShoppingCart } from "lucide-react";
 import type { Product } from "../../types/product";
 
 interface ProductCardProps {
@@ -15,10 +15,6 @@ export default function ProductCard({ product, isFavorite, onToggleFavorite }: P
         <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(); }} className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border border-white/10 hover:bg-black/80 hover:scale-110 transition-all z-10">
           <Heart className={`w-4 h-4 transition-colors ${isFavorite ? "fill-[#05C71F] text-[#05C71F]" : "text-white"}`} />
         </button>
-        <div className="absolute top-3 left-3 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1 text-xs font-semibold text-white">
-          <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-          {product.sales > 0 ? `${product.sales}+ vendidos` : 'Novo'}
-        </div>
       </div>
       <div className="p-5 flex flex-col flex-1">
         <span className="text-[10px] font-bold text-emerald-400 mb-2 uppercase tracking-wider">{product.category}</span>

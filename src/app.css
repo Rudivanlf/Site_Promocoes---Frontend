@@ -461,11 +461,6 @@
   letter-spacing: 0.5px;
 }
 
-.home-card .sales {
-  color: var(--color-text-secondary);
-  font-size: 0.9rem;
-}
-
 .card-image-container {
   position: relative;
   overflow: hidden;
@@ -1078,12 +1073,6 @@
   letter-spacing: 0.5px;
 }
 
-.chart-tooltip-sales {
-  font-size: 0.72rem;
-  color: #6b7280;
-  font-style: italic;
-}
-
 /* Chart container helper */
 .chart-container {
   width: 100%;
@@ -1366,7 +1355,6 @@
 }
 
 .analytics-product-price { color: #22c55e; font-size: 1.2rem; font-weight: 800; }
-.analytics-product-sales { color: #9ca3af; font-size: 0.8rem; }
 
 @keyframes slideInPanel {
   from { opacity: 0; transform: translateX(-16px); }
@@ -1741,7 +1729,6 @@
   .home-card img { height: 100px; margin-bottom: 0.5rem; }
   .home-card h3 { font-size: 0.85rem; margin-bottom: 0.5rem; }
   .home-card .price { font-size: 1.1rem; }
-  .home-card .sales { font-size: 0.8rem; }
   .pagination { gap: 0.25rem; margin-top: 1rem; }
   .pagination button { min-width: 35px; height: 35px; font-size: 0.8rem; }
   .side-product { padding: 1.5rem; gap: 1rem; }

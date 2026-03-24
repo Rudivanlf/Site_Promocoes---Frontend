@@ -101,12 +101,6 @@
   letter-spacing: 0.5px;
 }
 
-.chart-tooltip-sales {
-  font-size: 0.72rem;
-  color: #6b7280;
-  font-style: italic;
-}
-
 @keyframes slideInPanel {
   from {
     opacity: 0;

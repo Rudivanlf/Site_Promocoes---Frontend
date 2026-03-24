@@ -21,7 +21,7 @@ function ChartTooltipContent(props?: unknown) {
   const parsed = props as
     | {
         active?: boolean;
-        payload?: Array<{ payload?: { name?: string; price?: number | string; sales?: number } }>;
+        payload?: Array<{ payload?: { name?: string; price?: number | string } }>;
       }
     | undefined;
 
@@ -36,7 +36,6 @@ function ChartTooltipContent(props?: unknown) {
         <span className="chart-tooltip-price">
           R$ {typeof data?.price === "number" ? data.price.toFixed(2) : data?.price}
         </span>
-        {data?.sales !== undefined && <span className="chart-tooltip-sales">{data.sales} vendas</span>}
       </div>
     );
   }
