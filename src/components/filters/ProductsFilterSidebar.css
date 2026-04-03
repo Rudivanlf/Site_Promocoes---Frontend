@@ -395,6 +395,27 @@ input[type="range"].range-max::-moz-range-track {
   min-width: 0;
 }
 
+.storeRadioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.storeRadioOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #d8e0ea;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.storeRadioOption input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #22c55e;
+}
+
 @media (max-width: 1024px) {
   .home-layout.active {
     grid-template-columns: minmax(0, 1fr);

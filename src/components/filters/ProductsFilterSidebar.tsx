@@ -7,8 +7,10 @@ interface ProductsFilterSidebarProps {
   minPrice: number;
   maxPrice: number;
   priceRange: [number, number];
+  selectedStore: "all" | "mercado_livre" | "amazon";
   onMinPriceChange: (value: number) => void;
   onMaxPriceChange: (value: number) => void;
+  onStoreChange: (store: "all" | "mercado_livre" | "amazon") => void;
 }
 
 function formatCurrency(value: number): string {
@@ -23,8 +25,10 @@ export function ProductsFilterSidebar({
   minPrice,
   maxPrice,
   priceRange,
+  selectedStore,
   onMinPriceChange,
   onMaxPriceChange,
+  onStoreChange,
 }: ProductsFilterSidebarProps) {
   const [mobileExpanded, setMobileExpanded] = useState(false);
 
@@ -89,7 +93,43 @@ export function ProductsFilterSidebar({
           </div>
         </section>
 
-        {/* Loja section removed — store filtering disabled */}
+        <section className="filterSection">
+          <h4 className="filterSectionTitle">Loja</h4>
+          <div className="storeRadioGroup" role="radiogroup" aria-label="Filtro por loja">
+            <label className="storeRadioOption">
+              <input
+                type="radio"
+                name="store-filter"
+                value="all"
+                checked={selectedStore === "all"}
+                onChange={() => onStoreChange("all")}
+              />
+              <span>Todos</span>
+            </label>
+
+            <label className="storeRadioOption">
+              <input
+                type="radio"
+                name="store-filter"
+                value="mercado_livre"
+                checked={selectedStore === "mercado_livre"}
+                onChange={() => onStoreChange("mercado_livre")}
+              />
+              <span>Mercado Livre</span>
+            </label>
+
+            <label className="storeRadioOption">
+              <input
+                type="radio"
+                name="store-filter"
+                value="amazon"
+                checked={selectedStore === "amazon"}
+                onChange={() => onStoreChange("amazon")}
+              />
+              <span>Amazon</span>
+            </label>
+          </div>
+        </section>
 
         {/* Avaliação mínima removed */}
       </div>

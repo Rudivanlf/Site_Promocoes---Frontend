@@ -71,6 +71,7 @@ export function extractRating(product: Product): number {
 
 function App() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [selectedStore, setSelectedStore] = useState<"all" | "mercado_livre" | "amazon">("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -309,7 +310,17 @@ function App() {
 
   const filteredHomeProducts = products.filter((product) => {
     const numericPrice = Number(product.price) || 0;
-    return numericPrice >= priceRange[0] && numericPrice <= priceRange[1];
+    const withinPrice = numericPrice >= priceRange[0] && numericPrice <= priceRange[1];
+
+    if (!withinPrice) return false;
+    if (selectedStore === "all") return true;
+
+    const normalizedCategory = (product.category || "").toLowerCase();
+    if (selectedStore === "amazon") {
+      return normalizedCategory.includes("amazon");
+    }
+
+    return normalizedCategory.includes("mercado livre") || normalizedCategory.includes("mercadolivre");
   });
 
   const handleBarClick = (data: unknown) => {
@@ -424,12 +435,17 @@ function App() {
                       minPrice={0}
                       maxPrice={maxAvailablePrice}
                       priceRange={priceRange}
+                      selectedStore={selectedStore}
                       onMinPriceChange={(value) => {
                         setPriceRange((prev) => [Math.min(value, prev[1]), prev[1]]);
                         setCurrentPage(1);
                       }}
                       onMaxPriceChange={(value) => {
                         setPriceRange((prev) => [prev[0], Math.max(value, prev[0])]);
+                        setCurrentPage(1);
+                      }}
+                      onStoreChange={(store) => {
+                        setSelectedStore(store);
                         setCurrentPage(1);
                       }}
                     />
