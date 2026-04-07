@@ -62,11 +62,13 @@ export async function fetchProducts(
 
   const mlUrl = buildApiUrl(`/api/scraper/mercadolivre/?${params}`);
   const amUrl = buildApiUrl(`/api/scraper/amazon/?${params}`);
+  const kbUrl = buildApiUrl(`/api/scraper/kabum/?${params}`);
 
-  const [mlRes, amRes] = await Promise.allSettled([fetch(mlUrl), fetch(amUrl)]);
+  const [mlRes, amRes, kbRes] = await Promise.allSettled([fetch(mlUrl), fetch(amUrl), fetch(kbUrl)]);
 
   const mlProducts: Product[] = [];
   const amProducts: Product[] = [];
+  const kbProducts: Product[] = [];
 
   if (mlRes.status === "fulfilled") {
     try {
@@ -94,7 +96,22 @@ export async function fetchProducts(
     }
   }
 
-  const combined = [...mlProducts, ...amProducts];
+  if (kbRes.status === "fulfilled") {
+    try {
+      const resp = kbRes.value;
+      if (resp.ok) {
+        const data = (await resp.json()) as ScraperResponse;
+        const mapped = data.produtos.map((p, i) =>
+          mapScraperProdutoToProduct(p, i + mlProducts.length + amProducts.length, "Kabum")
+        );
+        kbProducts.push(...mapped);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  const combined = [...mlProducts, ...amProducts, ...kbProducts];
 
   if (combined.length === 0) {
     // If both failed (or returned empty), try to surface a helpful error

@@ -54,6 +54,7 @@ function getPageFromPath(pathname: string): Page {
 export function extractStore(product: Product): string | null {
   const text = `${product.name} ${product.link ?? ""} ${product.category}`.toLowerCase();
   if (text.includes("amazon")) return "Amazon";
+  if (text.includes("kabum") || text.includes("ka bu m")) return "Kabum";
   if (text.includes("magazineluiza") || text.includes("magazine luiza") || text.includes("magalu")) return "Magazine Luiza";
   if (text.includes("casasbahia") || text.includes("casas bahia")) return "Casas Bahia";
   if (text.includes("americanas")) return "Americanas";
@@ -71,7 +72,7 @@ export function extractRating(product: Product): number {
 
 function App() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [selectedStore, setSelectedStore] = useState<"all" | "mercado_livre" | "amazon">("all");
+  const [selectedStore, setSelectedStore] = useState<"all" | "mercado_livre" | "amazon" | "kabum">("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -318,6 +319,10 @@ function App() {
     const normalizedCategory = (product.category || "").toLowerCase();
     if (selectedStore === "amazon") {
       return normalizedCategory.includes("amazon");
+    }
+
+    if (selectedStore === "kabum") {
+      return normalizedCategory.includes("kabum") || normalizedCategory.includes("ka bu m");
     }
 
     return normalizedCategory.includes("mercado livre") || normalizedCategory.includes("mercadolivre");

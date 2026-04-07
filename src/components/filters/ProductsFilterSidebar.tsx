@@ -7,10 +7,10 @@ interface ProductsFilterSidebarProps {
   minPrice: number;
   maxPrice: number;
   priceRange: [number, number];
-  selectedStore: "all" | "mercado_livre" | "amazon";
+  selectedStore: "all" | "mercado_livre" | "amazon" | "kabum";
   onMinPriceChange: (value: number) => void;
   onMaxPriceChange: (value: number) => void;
-  onStoreChange: (store: "all" | "mercado_livre" | "amazon") => void;
+  onStoreChange: (store: "all" | "mercado_livre" | "amazon" | "kabum") => void;
 }
 
 function formatCurrency(value: number): string {
@@ -127,6 +127,17 @@ export function ProductsFilterSidebar({
                 onChange={() => onStoreChange("amazon")}
               />
               <span>Amazon</span>
+            </label>
+
+            <label className="storeRadioOption">
+              <input
+                type="radio"
+                name="store-filter"
+                value="kabum"
+                checked={selectedStore === "kabum"}
+                onChange={() => onStoreChange("kabum")}
+              />
+              <span>Kabum</span>
             </label>
           </div>
         </section>
