@@ -54,62 +54,55 @@ function buildApiUrl(path: string): string {
   return `${API_BASE_URL}${normalizedPath}`;
 }
 
+function buildEndpointVariants(basePath: string, params: URLSearchParams): string[] {
+  const normalized = basePath.startsWith("/") ? basePath : `/${basePath}`;
+  const withoutSlash = normalized.replace(/\/+$/, "");
+  const withSlash = `${withoutSlash}/`;
+  return [buildApiUrl(`${withSlash}?${params}`), buildApiUrl(`${withoutSlash}?${params}`)];
+}
+
+async function fetchSourceProducts(
+  endpointBasePath: string,
+  sourceName: string,
+  initialIndex: number,
+  params: URLSearchParams
+): Promise<Product[]> {
+  const endpointVariants = buildEndpointVariants(endpointBasePath, params);
+
+  for (let i = 0; i < endpointVariants.length; i += 1) {
+    try {
+      const response = await fetch(endpointVariants[i]);
+      if (!response.ok) {
+        // If strict routing differs between environments, try the alternate slash variant.
+        if (response.status === 404 && i < endpointVariants.length - 1) {
+          continue;
+        }
+        return [];
+      }
+
+      const data = (await response.json()) as ScraperResponse;
+      return data.produtos.map((product, idx) => mapScraperProdutoToProduct(product, initialIndex + idx, sourceName));
+    } catch {
+      if (i === endpointVariants.length - 1) {
+        return [];
+      }
+    }
+  }
+
+  return [];
+}
+
 export async function fetchProducts(
   query: string,
   pagina: number = 1
 ): Promise<Product[]> {
-  const params = new URLSearchParams({ q: query, pagina: String(pagina) });
+  const params = new URLSearchParams({ q: query, pagina: String(pagina), detalhes: "false" });
 
-  const mlUrl = buildApiUrl(`/api/scraper/mercadolivre/?${params}`);
-  const amUrl = buildApiUrl(`/api/scraper/amazon/?${params}`);
-  const kbUrl = buildApiUrl(`/api/scraper/kabum/?${params}`);
+  const mlPromise = fetchSourceProducts("/api/scraper/mercadolivre", "Mercado Livre", 0, params);
+  const amPromise = fetchSourceProducts("/api/scraper/amazon", "Amazon", 100000, params);
+  const kbPromise = fetchSourceProducts("/api/scraper/kabum", "Kabum", 200000, params);
 
-  const [mlRes, amRes, kbRes] = await Promise.allSettled([fetch(mlUrl), fetch(amUrl), fetch(kbUrl)]);
-
-  const mlProducts: Product[] = [];
-  const amProducts: Product[] = [];
-  const kbProducts: Product[] = [];
-
-  if (mlRes.status === "fulfilled") {
-    try {
-      const resp = mlRes.value;
-      if (resp.ok) {
-        const data = (await resp.json()) as ScraperResponse;
-        const mapped = data.produtos.map((p, i) => mapScraperProdutoToProduct(p, i, "Mercado Livre"));
-        mlProducts.push(...mapped);
-      }
-    } catch (e) {
-      // ignore individual source errors
-    }
-  }
-
-  if (amRes.status === "fulfilled") {
-    try {
-      const resp = amRes.value;
-      if (resp.ok) {
-        const data = (await resp.json()) as ScraperResponse;
-        const mapped = data.produtos.map((p, i) => mapScraperProdutoToProduct(p, i + mlProducts.length, "Amazon"));
-        amProducts.push(...mapped);
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  if (kbRes.status === "fulfilled") {
-    try {
-      const resp = kbRes.value;
-      if (resp.ok) {
-        const data = (await resp.json()) as ScraperResponse;
-        const mapped = data.produtos.map((p, i) =>
-          mapScraperProdutoToProduct(p, i + mlProducts.length + amProducts.length, "Kabum")
-        );
-        kbProducts.push(...mapped);
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
+  const [mlProducts, amProducts, kbProducts] = await Promise.all([mlPromise, amPromise, kbPromise]);
 
   const combined = [...mlProducts, ...amProducts, ...kbProducts];
 
