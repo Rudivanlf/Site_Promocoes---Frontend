@@ -29,7 +29,7 @@ export function SideProduct({ product, favorites, onToggleFavorite, onClose }: S
         {product.link && (
           <p>
             <a href={product.link} target="_blank" rel="noreferrer">
-              Ver no Mercado Livre
+              Ver pagina do produto
             </a>
           </p>
         )}
