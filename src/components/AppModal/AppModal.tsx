@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { X, User, Heart, CalendarDays, BarChart3, Settings, ExternalLink } from "lucide-react";
+import { X, User, Heart, CalendarDays, BarChart3, Settings, ExternalLink, MessagesSquare } from "lucide-react";
 import type { Product } from "../../types/product";
 import { loginUser, registerUser } from "../../shared/utils/authApi";
 import { GoogleLoginButton } from "../../features/login/GoogleLoginButton";
@@ -8,6 +8,7 @@ import { formatCurrency } from "../../features/products/productPricing";
 import "./AppModal.css";
 import { ShoppingCalendar } from "./ShoppingCalendar";
 import { AnalyticsTab } from "./AnalyticsTab";
+import { ChatTab } from "./ChatTab";
 
 const FloatingDock = ({
   items,
@@ -447,7 +448,7 @@ function DockIcon({
   );
 }
 
-export type TabId = "account" | "favorites" | "calendar" | "analytics" | "settings";
+export type TabId = "account" | "favorites" | "calendar" | "analytics" | "chat" | "settings";
 
 export type AppModalProps = {
   isOpen: boolean;
@@ -525,6 +526,12 @@ const AppModal: React.FC<AppModalProps> = ({
       icon: <BarChart3 className="h-full w-full" />,
       onClick: () => (userEmail ? setActiveTab("analytics") : setActiveTab("account")),
       active: activeTab === "analytics",
+    },
+    {
+      title: "Chat IA",
+      icon: <MessagesSquare className="h-full w-full" />,
+      onClick: () => setActiveTab("chat"),
+      active: activeTab === "chat",
     },
     {
       title: "Configurações",
@@ -847,6 +854,16 @@ const AppModal: React.FC<AppModalProps> = ({
             ),
             tab: "settings" as TabId,
           },
+          {
+            label: "Chat IA",
+            desc: "Sugestoes em tempo real",
+            icon: (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#39ff14" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+              </svg>
+            ),
+            tab: "chat" as TabId,
+          },
         ].map((item) => (
           <button
             key={item.label}
@@ -915,6 +932,10 @@ const AppModal: React.FC<AppModalProps> = ({
 
           {activeTab === "analytics" && (
             <AnalyticsTab favoriteProducts={favoriteProducts ?? []} />
+          )}
+
+          {activeTab === "chat" && (
+            <ChatTab />
           )}
 
           {activeTab === "settings" && (
