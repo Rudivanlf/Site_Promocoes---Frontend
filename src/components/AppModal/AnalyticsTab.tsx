@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { BarChart3, TrendingDown, TrendingUp, Minus, ExternalLink } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { BarChart3, ExternalLink } from "lucide-react";
 import type { Product } from "../../types/product";
 import { formatCurrency } from "../../features/products/productPricing";
 import {
@@ -8,7 +8,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  ReferenceLine,
   Area,
   AreaChart,
 } from "recharts";
@@ -22,6 +21,8 @@ type HistoryMap = Record<string, HistoryEntry[]>;
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
+  const tooltipLabel = payload?.[0]?.payload?.tooltipLabel ?? label;
+  const tooltipPrice = formatCurrency(payload[0].value);
   return (
     <div style={{
       background: "rgba(3,21,13,0.97)",
@@ -30,17 +31,45 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       padding: "10px 14px",
       fontSize: "13px",
     }}>
-      <div style={{ color: "rgba(255,255,255,0.5)", marginBottom: "4px", fontSize: "11px" }}>{label}</div>
-      <div style={{ color: "#39ff14", fontWeight: 800, fontSize: "15px" }}>
-        {formatCurrency(payload[0].value)}
+      <div style={{ color: "#39ff14", fontWeight: 800, fontSize: "13px" }}>
+        {tooltipLabel} - {tooltipPrice}
       </div>
     </div>
   );
 };
 
-function formatDateLabel(iso: string) {
+function formatAxisDate(iso: string) {
   const d = new Date(iso);
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+}
+
+function formatTooltipDate(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function cleanMlLink(link: string): string {
+  if (link.includes("click1.mercadolivre") || link.includes("/mclics/")) {
+    return "";
+  }
+  try {
+    const url = new URL(link);
+    [
+      "tracking_id",
+      "search_layout",
+      "position",
+      "type",
+      "wid",
+      "sid",
+      "polycard_client",
+      "is_advertising",
+      "searchVariation",
+    ].forEach((p) => url.searchParams.delete(p));
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return link;
+  }
 }
 
 export function AnalyticsTab({ favoriteProducts }: AnalyticsTabProps) {
@@ -53,17 +82,19 @@ export function AnalyticsTab({ favoriteProducts }: AnalyticsTabProps) {
 
   const API_BASE_URL = (import.meta as any).env.VITE_BASE_API_URL ?? "";
 
-  // Busca histórico de todos os favoritos de uma vez
-  useEffect(() => {
-    if (!favoriteProducts.length) return;
+  const fetchHistory = useCallback((products: Product[]) => {
+    if (!products.length) return;
 
-    const links = favoriteProducts.map((p) => p.link ?? "").filter(Boolean);
+    const links = products.map((p) => cleanMlLink(p.link ?? "")).filter(Boolean);
     if (!links.length) return;
 
     setLoading(true);
     setError(null);
 
-    const token = localStorage.getItem("authToken");
+    const token =
+      localStorage.getItem("authToken") ??
+      localStorage.getItem("token") ??
+      localStorage.getItem("access");
     const encoded = links.map(encodeURIComponent).join(",");
 
     fetch(`${API_BASE_URL}/api/scraper/historico/?links=${encoded}`, {
@@ -74,81 +105,31 @@ export function AnalyticsTab({ favoriteProducts }: AnalyticsTabProps) {
         return r.json();
       })
       .then((data: HistoryMap) => {
-        setHistoryMap(data);
+        const remapped: HistoryMap = {};
+        products.forEach((p) => {
+          const clean = cleanMlLink(p.link ?? "");
+          if (clean && data[clean]) {
+            remapped[p.link ?? ""] = data[clean];
+          }
+        });
+        setHistoryMap(remapped);
       })
-      .catch(() => setError("Não foi possível carregar o histórico."))
+      .catch(() => setError("Falha ao carregar historico"))
       .finally(() => setLoading(false));
-  }, [favoriteProducts]);
+  }, [API_BASE_URL]);
 
-
-// Função para limpar links de rastreamento do ML
-function cleanMlLink(link: string): string {
-  // Links de clique/rastreamento do ML — descarta
-  if (link.includes("click1.mercadolivre") || link.includes("/mclics/")) {
-    return "";
-  }
-  // Remove parâmetros de tracking do hash (#polycard_client=...)
-  // mantendo só a URL limpa até o # ou ?tracking_id
-  try {
-    const url = new URL(link);
-    // Remove query params de tracking
-    ["tracking_id", "search_layout", "position", "type", "wid", "sid",
-     "polycard_client", "is_advertising", "searchVariation"].forEach(
-      (p) => url.searchParams.delete(p)
-    );
-    // Remove o hash inteiro (contém mais tracking)
-    url.hash = "";
-    return url.toString();
-  } catch {
-    return link;
-  }
-}
-
-useEffect(() => {
-  if (!favoriteProducts.length) return;
-
-  const links = favoriteProducts
-    .map((p) => cleanMlLink(p.link ?? ""))
-    .filter(Boolean);
-
-  if (!links.length) return;
-
-  setLoading(true);
-  setError(null);
-
- const token = localStorage.getItem("authToken") 
-           ?? localStorage.getItem("token")
-           ?? localStorage.getItem("access");  // cobre variações de nome
-  const encoded = links.map(encodeURIComponent).join(",");
-
-  fetch(`${API_BASE_URL}/api/scraper/historico/?links=${encoded}`, {
-    headers: token ? { Authorization: `Token ${token}` } : {},
-  })
-    .then((r) => {
-      if (!r.ok) throw new Error();
-      return r.json();
-    })
-    .then((data: HistoryMap) => {
-      // Remapeia de volta para o link original do produto
-      const remapped: HistoryMap = {};
-      favoriteProducts.forEach((p) => {
-        const clean = cleanMlLink(p.link ?? "");
-        if (clean && data[clean]) {
-          remapped[p.link ?? ""] = data[clean];
-        }
-      });
-      setHistoryMap(remapped);
-    })
-    .catch(() => setError("Não foi possível carregar o histórico."))
-    .finally(() => setLoading(false));
-}, [favoriteProducts]);
+  useEffect(() => {
+    fetchHistory(favoriteProducts);
+  }, [favoriteProducts, fetchHistory]);
 
   // Atualiza produto selecionado se favoritos mudarem
   useEffect(() => {
-    if (favoriteProducts.length > 0 && !selectedProduct) {
+    if (!favoriteProducts.length) return;
+    const stillExists = favoriteProducts.some((p) => p.link === selectedProduct?.link || p.id === selectedProduct?.id);
+    if (!selectedProduct || !stillExists) {
       setSelectedProduct(favoriteProducts[0]);
     }
-  }, [favoriteProducts]);
+  }, [favoriteProducts, selectedProduct]);
 
   if (favoriteProducts.length === 0) {
     return (
@@ -165,26 +146,20 @@ useEffect(() => {
   // Dados do produto selecionado
   const selectedLink = selectedProduct?.link ?? "";
   const rawHistory = historyMap[selectedLink] ?? [];
+  const sortedHistory = [...rawHistory].sort(
+    (a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
+  );
 
   // Formata para o gráfico
-  const history = rawHistory.map((e) => ({
-    month: formatDateLabel(e.recorded_at),
+  const history = sortedHistory.map((e) => ({
+    dateLabel: formatAxisDate(e.recorded_at),
+    tooltipLabel: formatTooltipDate(e.recorded_at),
     price: e.price,
   }));
 
-  const prices = history.map((h) => h.price);
-  const minPrice = prices.length ? Math.min(...prices) : 0;
-  const maxPrice = prices.length ? Math.max(...prices) : 0;
   const currentPrice = selectedProduct?.price ?? 0;
-  const avgPrice = prices.length
-    ? prices.reduce((a, b) => a + b, 0) / prices.length
-    : 0;
-  const trend = prices.length >= 2 ? prices[prices.length - 1] - prices[0] : 0;
-  const trendPct = prices.length >= 2
-    ? ((trend / prices[0]) * 100).toFixed(1)
-    : "0.0";
 
-  const hasHistory = history.length >= 2;
+  const hasHistory = history.length > 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: "1.25rem" }}>
@@ -192,11 +167,8 @@ useEffect(() => {
       {/* Título */}
       <div>
         <h2 style={{ margin: 0, fontSize: "1.3rem", fontWeight: 800, color: "#fff" }}>
-          Analytics de Preços
+          Historico de preco
         </h2>
-        <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" }}>
-          Histórico coletado a cada busca
-        </p>
       </div>
 
       <div style={{ display: "flex", gap: "1rem", flex: 1, minHeight: 0 }}>
@@ -212,7 +184,7 @@ useEffect(() => {
               selectedProduct?.id === product.id;
             const productLink = product.link ?? "";
             const productHistory = historyMap[productLink] ?? [];
-            const hasData = productHistory.length >= 2;
+            const hasData = productHistory.length > 0;
 
             return (
               <div
@@ -304,34 +276,6 @@ useEffect(() => {
               </a>
             </div>
 
-            {/* Stats */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.5rem" }}>
-              {[
-                { label: "Mínimo", value: hasHistory ? formatCurrency(minPrice) : "—", color: "#39ff14" },
-                { label: "Máximo", value: hasHistory ? formatCurrency(maxPrice) : "—", color: "#ff6b35" },
-                { label: "Média", value: hasHistory ? formatCurrency(avgPrice) : "—", color: "#38bdf8" },
-                {
-                  label: "Tendência",
-                  value: hasHistory ? `${Number(trendPct) > 0 ? "+" : ""}${trendPct}%` : "—",
-                  color: Number(trendPct) > 0 ? "#ff6b35" : "#39ff14",
-                  icon: hasHistory
-                    ? Number(trendPct) > 0
-                      ? <TrendingUp size={12} />
-                      : Number(trendPct) < 0
-                        ? <TrendingDown size={12} />
-                        : <Minus size={12} />
-                    : null,
-                },
-              ].map((stat) => (
-                <div key={stat.label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "0.6rem", textAlign: "center" }}>
-                  <p style={{ margin: 0, fontSize: "10px", color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>{stat.label}</p>
-                  <p style={{ margin: "3px 0 0", fontSize: "13px", fontWeight: 800, color: stat.color, display: "flex", alignItems: "center", justifyContent: "center", gap: "3px" }}>
-                    {stat.icon}{stat.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-
             {/* Gráfico ou estados de loading/vazio */}
             <div style={{ flex: 1, minHeight: "200px" }}>
               {loading ? (
@@ -340,17 +284,29 @@ useEffect(() => {
                   <p style={{ margin: 0, fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>Carregando histórico...</p>
                 </div>
               ) : error ? (
-                <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
                   <p style={{ margin: 0, fontSize: "12px", color: "#ff6b6b" }}>{error}</p>
+                  <button
+                    onClick={() => fetchHistory(favoriteProducts)}
+                    style={{
+                      borderRadius: 10,
+                      border: "1px solid rgba(57,255,20,0.35)",
+                      background: "rgba(57,255,20,0.12)",
+                      color: "#39ff14",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      padding: "6px 10px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Tentar novamente
+                  </button>
                 </div>
               ) : !hasHistory ? (
                 <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, background: "rgba(255,255,255,0.02)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.05)" }}>
                   <BarChart3 size={32} style={{ color: "rgba(57,255,20,0.2)" }} />
                   <p style={{ margin: 0, fontSize: "12px", color: "rgba(255,255,255,0.25)" }}>
-                    Histórico será gerado nas próximas buscas
-                  </p>
-                  <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.15)" }}>
-                    O ponto indicador (•) aparece quando há dados
+                    Sem historico de preco
                   </p>
                 </div>
               ) : (
@@ -364,7 +320,7 @@ useEffect(() => {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                     <XAxis
-                      dataKey="month"
+                      dataKey="dateLabel"
                       tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }}
                       axisLine={false}
                       tickLine={false}
@@ -373,21 +329,10 @@ useEffect(() => {
                       tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }}
                       axisLine={false}
                       tickLine={false}
-                      tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`}
-                      width={48}
+                      tickFormatter={(v) => formatCurrency(v)}
+                      width={70}
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    <ReferenceLine
-                      y={minPrice}
-                      stroke="rgba(57,255,20,0.3)"
-                      strokeDasharray="4 4"
-                      label={{ value: "Mín", fill: "#39ff14", fontSize: 10 }}
-                    />
-                    <ReferenceLine
-                      y={currentPrice}
-                      stroke="rgba(255,255,255,0.2)"
-                      strokeDasharray="4 4"
-                    />
                     <Area
                       type="monotone"
                       dataKey="price"
@@ -415,11 +360,6 @@ useEffect(() => {
               )}
             </div>
 
-            <p style={{ margin: 0, fontSize: "10px", color: "rgba(255,255,255,0.2)", textAlign: "center" }}>
-              {hasHistory
-                ? `${history.length} registros coletados`
-                : "Busque por este produto para iniciar o histórico"}
-            </p>
           </div>
         )}
       </div>
