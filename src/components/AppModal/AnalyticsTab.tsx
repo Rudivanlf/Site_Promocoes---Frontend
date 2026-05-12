@@ -88,6 +88,18 @@ export function AnalyticsTab({ favoriteProducts }: AnalyticsTabProps) {
     const links = products.map((p) => cleanMlLink(p.link ?? "")).filter(Boolean);
     if (!links.length) return;
 
+    const startedAt = Date.now();
+    const minDelayMs = 1000;
+    const finishLoading = () => {
+      const elapsed = Date.now() - startedAt;
+      const remaining = minDelayMs - elapsed;
+      if (remaining > 0) {
+        setTimeout(() => setLoading(false), remaining);
+        return;
+      }
+      setLoading(false);
+    };
+
     setLoading(true);
     setError(null);
 
@@ -115,7 +127,7 @@ export function AnalyticsTab({ favoriteProducts }: AnalyticsTabProps) {
         setHistoryMap(remapped);
       })
       .catch(() => setError("Falha ao carregar historico"))
-      .finally(() => setLoading(false));
+        .finally(() => finishLoading());
   }, [API_BASE_URL]);
 
   useEffect(() => {
